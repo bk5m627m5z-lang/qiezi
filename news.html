@@ -886,7 +886,7 @@
             position: absolute; top: 0; left: 0;
         }
         .entry-phone.unlocked .entry-phone-screen { background: transparent; }
-        .entry-phone.unlocked #entryIframe { opacity: 1 !important; pointer-events: auto !important; }
+        .entry-phone.unlocked #entryIframe { pointer-events: auto !important; }
         /* 手机内半透明滚动条——iframe 需从父级穿透 */
         #entryIframe { scrollbar-width: thin; scrollbar-color: rgba(167,139,250,0.3) transparent; }
         /* 父级滚动包裹层 */
@@ -1281,7 +1281,7 @@
                 <div class="entry-phone-screen" onclick="unlockPhone()">
                     <div class="entry-phone-glow"></div>
                     <div id="iframeScrollWrap" style="position:absolute;top:0;left:0;width:100%;height:100%;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;">
-                        <iframe id="entryIframe" src="index.html" scrolling="no" style="width:375px;height:1800px;border:none;opacity:0;transition:opacity 0.6s;transform:scale(0.72);transform-origin:0 0;display:block;"></iframe>
+                        <iframe id="entryIframe" src="about:blank" data-src="index.html" scrolling="no" style="width:375px;height:1800px;border:none;opacity:0;transition:opacity 0.6s;transform:scale(0.72);transform-origin:0 0;display:block;"></iframe>
                     </div>
                 </div>
             </div>
@@ -3379,6 +3379,7 @@
         var f = document.getElementById("entryIframe");
         if (h) h.classList.add("show");
         if (p) p.classList.add("unlocked");
+        if (f) { f.style.opacity = '0'; f.src = f.getAttribute("data-src"); f.onload = function() { f.style.opacity = '1'; }; }
     }
     </script>
 
