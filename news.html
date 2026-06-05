@@ -1281,7 +1281,7 @@
                 <div class="entry-phone-screen" onclick="unlockPhone()">
                     <div class="entry-phone-glow"></div>
                     <div id="iframeScrollWrap" style="position:absolute;top:0;left:0;width:100%;height:100%;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;">
-                        <iframe id="entryIframe" src="about:blank" data-src="index.html" scrolling="no" style="width:375px;height:1800px;border:none;opacity:0;transition:opacity 0.6s;transform:scale(0.72);transform-origin:0 0;display:block;"></iframe>
+                        <iframe id="entryIframe" src="index.html" scrolling="no" style="width:375px;height:1800px;border:none;opacity:0;transition:opacity 0.6s;transform:scale(0.72);transform-origin:0 0;display:block;"></iframe>
                     </div>
                 </div>
             </div>
@@ -3379,7 +3379,7 @@
         var f = document.getElementById("entryIframe");
         if (h) h.classList.add("show");
         if (p) p.classList.add("unlocked");
-        if (f) { f.style.opacity = '0'; f.src = f.getAttribute("data-src"); f.onload = function() { f.style.opacity = '1'; }; }
+        if (f) f.style.opacity = '1';
     }
     </script>
 
