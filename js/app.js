@@ -1,4 +1,4 @@
-/* ============================================================
+﻿/* ============================================================
  *  神秘命运占卜 - 主逻辑脚本
  *  按功能模块分组，使用 JSDoc 风格注释
  * ============================================================ */
@@ -313,6 +313,8 @@ function generateTarotResult() {
 
 /** 汇总所有数据并渲染到第10页 */
 function showFinalResult() {
+    // 防止在数据被清空后（如重启时 observer 触发）执行
+    if (!userData.answers.length || !userData.tarotCard || !userData.rune) return;
     var personality = calculatePersonality();
     var fortune = generateFortune();
     var tarot = generateTarotResult();

@@ -1,0 +1,3387 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>赛博玄学走红：这届年轻人在用AI"算"什么？</title>
+
+    <!-- Chart.js 可视化库（本地加载，避免CDN被墙） -->
+    <script src="js/chart.min.js"></script>
+    <!-- ECharts 可视化 -->
+    <script src="js/echarts.min.js"></script>
+    <!-- 中国地图 GeoJSON 数据 -->
+    <script src="js/china_geo.js"></script>
+
+    <style>
+        /* ============================================================
+         *  全局重置 & 基础变量
+         * ============================================================ */
+        :root {
+            --bg-primary: #0a0a1a;
+            --bg-secondary: #0f0f28;
+            --bg-card: #16163a;
+            --text-primary: #e0d5f0;
+            --text-secondary: #a89bc4;
+            --text-muted: #6e6491;
+            --accent: #7c3aed;
+            --accent-glow: #a78bfa;
+            --accent-cyan: #22d3ee;
+            --nav-width: 170px;
+            --border-subtle: rgba(124, 58, 237, 0.2);
+            --font-heading: 'PingFang SC', 'Microsoft YaHei', 'Noto Sans SC', sans-serif;
+            --font-body: 'PingFang SC', 'Microsoft YaHei', 'Noto Sans SC', sans-serif;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+            scroll-padding-top: 40px;
+        }
+
+        body {
+            font-family: var(--font-body);
+            background: #0a0a1a;
+            color: var(--text-primary);
+            line-height: 1.8;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ============================================================
+         *  星空背景
+         * ============================================================ */
+        .stars-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            
+            z-index: 0;
+        }
+
+        .star-dot {
+            position: absolute;
+            background: #fff;
+            border-radius: 50%;
+            animation: starTwinkle 3s infinite alternate;
+        }
+
+        @keyframes starTwinkle {
+            0% { opacity: 0.3; transform: scale(1); }
+            100% { opacity: 1; transform: scale(1.5); }
+        }
+
+        /* ============================================================
+         *  侧边导航栏
+         * ============================================================ */
+        .side-nav {
+            position: fixed;
+            top: 0; left: 0;
+            width: var(--nav-width);
+            height: 100vh;
+            background: rgba(15, 15, 40, 0.95);
+            border-right: 1px solid var(--border-subtle);
+            z-index: 100;
+            display: flex; flex-direction: column;
+            padding: 24px 0 20px 0;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            overflow-y: auto;
+        }
+
+        .nav-header {
+            padding: 0 20px 24px 20px;
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 16px;
+        }
+
+        .nav-header .nav-title {
+            font-family: var(--font-heading);
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--accent-glow);
+            letter-spacing: 0.05em;
+            line-height: 1.4;
+        }
+
+        .nav-header .nav-subtitle {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        .nav-list {
+            list-style: none;
+            flex: 1;
+        }
+
+        .nav-item {
+            display: block;
+            padding: 8px 16px;
+            font-size: 12px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            cursor: pointer;
+            border-left: 3px solid transparent;
+            transition: all 0.3s ease;
+            position: relative;
+            line-height: 1.4;
+        }
+
+        .nav-item:hover {
+            color: var(--accent-glow);
+            background: rgba(124, 58, 237, 0.08);
+        }
+
+        .nav-item.active {
+            color: var(--accent-glow);
+            background: rgba(124, 58, 237, 0.12);
+            border-left-color: var(--accent);
+            font-weight: 600;
+        }
+
+        .nav-item .nav-number {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            line-height: 20px;
+            text-align: center;
+            border-radius: 50%;
+            background: rgba(124, 58, 237, 0.2);
+            color: var(--accent-glow);
+            font-size: 11px;
+            margin-right: 8px;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .nav-item.active .nav-number {
+            background: var(--accent);
+            color: #fff;
+        }
+
+        .nav-footer {
+            padding: 16px 20px 0;
+            border-top: 1px solid var(--border-subtle);
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+        /* 侧边栏：收起时保留图标，悬停展开全文 */
+        .side-nav:hover,
+        .side-nav.pinned { width: var(--nav-width); }
+        .side-nav:hover .nav-item,
+        .side-nav.pinned .nav-item { padding: 10px 20px; }
+        .side-nav:hover .nav-item .nav-number + *,
+        .side-nav.pinned .nav-item .nav-number + * { display: inline; }
+        .side-nav:hover .nav-header,
+        .side-nav.pinned .nav-header { opacity: 1; width: auto; }
+        .side-nav:hover .nav-footer,
+        .side-nav.pinned .nav-footer { opacity: 1; }
+        /* 收起状态：仅图标 */
+        .nav-header { overflow: hidden; white-space: nowrap; }
+        .nav-item { overflow: hidden; white-space: nowrap; }
+        .nav-pin-btn {
+            position: absolute; top: 12px; right: 8px; width: 20px; height: 20px;
+            border-radius: 50%; background: rgba(124,58,237,0.25);
+            cursor: pointer; transition: all 0.3s ease; z-index: 102;
+            font-size: 10px; color: rgba(167,139,250,0.6); text-align: center; line-height: 20px;
+        }
+        .side-nav.pinned .nav-pin-btn { background: var(--accent); color: #fff; }
+        /* 折叠状态 */
+        body.nav-hidden .side-nav { width: 0; overflow: hidden; }
+        body.nav-hidden .main-content { margin-left: 0; }
+        body.nav-hidden .nav-hotzone { display: none; }
+
+        /* ============================================================
+         *  主内容区域
+         * ============================================================ */
+        .main-content {
+            margin-left: var(--nav-width);
+            position: relative;
+            z-index: 1;
+            transition: margin-left 0.3s ease;
+        }
+
+        /* --- 章节容器 + 两段门控 --- */
+        .chapter {
+            padding: 60px 60px 100px;
+            flex-direction: column;
+            justify-content: flex-start;
+            position: relative;
+            min-height: auto;
+        }
+        #chapter0, #chapter1, #chapter2, #chapter3, #chapter4, #chapter5, #chapter6 { display: none; }
+        body.phone-lit #chapter0 { display: flex; }
+        body.unlocked #chapter1 { display: flex; }
+        body.all-shown #chapter2 { display: flex; }
+        body.ch3up #chapter3 { display: flex; }
+        body.mood-done #chapter4 { display: flex; }
+        body.trap-done #chapter5 { display: flex; }
+        body.rated #chapter6 { display: flex; }
+        #chapter0 { background: linear-gradient(180deg, #0a0a1a 0%, #0d0d22 100%); }
+        #chapter1 { background: linear-gradient(180deg, #0d0d22 0%, #111128 100%); }
+        #chapter2 { background: linear-gradient(180deg, #111128 0%, #151530 100%); }
+        #chapter3 { background: linear-gradient(180deg, #151530 0%, #1a1a38 100%); }
+        #chapter4 { background: linear-gradient(180deg, #1a1a38 0%, #1f1f42 100%); }
+        #chapter5 { background: linear-gradient(180deg, #1f1f42 0%, #25254d 100%); }
+        #chapter6 { background: linear-gradient(180deg, #25254d 0%, #2a2a55 100%); }
+
+        /* 章节切换按钮 */
+        .chapter-nav-arrow {
+            position: fixed;
+            right: 30px;
+            z-index: 100;
+            width: 48px; height: 48px;
+            border-radius: 50%;
+            background: rgba(124,58,237,0.25);
+            border: 1px solid rgba(167,139,250,0.5);
+            color: var(--accent-glow);
+            font-size: 22px;
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(8px);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+        .chapter-nav-arrow:hover {
+            background: var(--accent);
+            color: #fff;
+            transform: scale(1.08);
+            box-shadow: 0 6px 28px rgba(124,58,237,0.4);
+        }
+        .chapter-nav-down { bottom: 30px; }
+        .chapter-nav-up { top: 30px; }
+        .chapter-nav-arrow:disabled { opacity: 0.15;  transform: scale(1); }
+
+        /* 章节进度指示器 */
+        .chapter-progress {
+            position: fixed;
+            right: 36px;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            align-items: center;
+        }
+        .chapter-progress-dot {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            background: rgba(167,139,250,0.3);
+            transition: all 0.4s ease;
+            cursor: pointer;
+        }
+        .chapter-progress-dot:hover { background: rgba(167,139,250,0.7); transform: scale(1.5); }
+        .chapter-progress-dot.active { background: var(--accent-glow); box-shadow: 0 0 10px rgba(167,139,250,0.6); transform: scale(1.3); }
+
+        .chapter-header {
+            margin-bottom: 48px;
+            text-align: center;
+        }
+
+        .chapter-number {
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--accent-glow);
+            margin-bottom: 12px;
+            font-weight: 600;
+        }
+
+        .chapter-title {
+            font-family: var(--font-heading);
+            font-size: 2.4rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #e0d5f0 0%, #a78bfa 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 16px;
+            line-height: 1.3;
+        }
+
+        .chapter-subtitle {
+            font-size: 1.05rem;
+            color: var(--text-secondary);
+            font-weight: 400;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* --- 正文卡片 --- */
+        .content-card {
+            background: transparent;
+            border: none;
+            padding: 28px 20px;
+            margin-bottom: 20px;
+            max-width: 720px;
+            margin-left: auto;
+            margin-right: auto;
+            width: 100%;
+        }
+
+        /* ============================================================
+         *  章节内步骤导航
+         * ============================================================ */
+        .chapter-flow {
+            position: relative;
+            max-width: 760px;
+            margin: 0 auto;
+            width: 100%;
+        }
+        .chapter-step {
+            display: none;
+            animation: stepFadeIn 0.5s ease-out;
+        }
+        .chapter-step.active {
+            display: block;
+        }
+        @keyframes stepFadeIn {
+            0% { opacity: 0; transform: translateY(16px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+        .step-indicator {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin: 24px 0 12px;
+        }
+        .step-dot {
+            width: 10px; height: 10px;
+            border-radius: 50%;
+            background: rgba(124,58,237,0.3);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .step-dot.active { background: var(--accent); width: 28px; border-radius: 5px; }
+        .step-dot.done { background: rgba(34,211,238,0.6); }
+        .step-nav-row {
+            display: flex; gap: 12px; justify-content: center; margin: 20px 0 32px;
+        }
+        .step-btn {
+            padding: 10px 28px; border-radius: 24px; border: 1px solid var(--accent);
+            background: transparent; color: var(--accent-glow);
+            font-size: 13px; cursor: pointer; font-weight: 600;
+            transition: all 0.3s ease; font-family: var(--font-body);
+            display: flex; align-items: center; gap: 6px;
+        }
+        .step-btn:hover { background: var(--accent); color: #fff; }
+        .step-btn:disabled { opacity: 0.3; cursor: default;  }
+        .step-counter {
+            text-align: center; color: var(--text-muted); font-size: 11px; margin-bottom: 8px;
+        }
+
+        .content-card p {
+            margin-bottom: 16px;
+            color: var(--text-secondary);
+            font-size: 1rem;
+            line-height: 1.9;
+        }
+
+        .content-card p:last-child {
+            margin-bottom: 0;
+        }
+
+        /* --- 高亮文本 --- */
+        .highlight {
+            color: var(--accent-glow);
+            font-weight: 600;
+        }
+
+        .stat-big {
+            font-size: 2.8rem;
+            font-weight: 800;
+            color: var(--accent-cyan);
+            font-family: var(--font-heading);
+        }
+
+        /* --- 图表容器 --- */
+        .chart-container {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 16px;
+            padding: 32px;
+            margin-bottom: 28px;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+            width: 100%;
+            position: relative;
+        }
+
+        .chart-container canvas {
+            display: block;
+            margin: 0 auto;
+        }
+
+        .chart-title {
+            font-family: var(--font-heading);
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .chart-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin-bottom: 28px;
+            max-width: 1200px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .chart-grid .chart-container {
+            max-width: none;
+            margin-left: 0;
+            margin-right: 0;
+            margin-bottom: 0;
+        }
+        .chart-grid .chart-container canvas {
+            max-width: 100%;
+        }
+
+        .chart-source {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-align: right;
+            margin-top: 12px;
+        }
+
+        /* 树形图 */
+        .tree-block {
+            position: absolute;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            border-radius: 6px;
+            cursor: pointer;
+            overflow: hidden;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            padding: 6px;
+        }
+        .tree-block:hover {
+            transform: scale(1.03);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+            z-index: 10;
+        }
+        .tree-label {
+            color: #fff;
+            font-family: 'PingFang SC','Microsoft YaHei',sans-serif;
+            font-weight: 800;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.6);
+            
+            line-height: 1.4;
+            letter-spacing: 0.02em;
+        }
+        .tree-value {
+            font-size: 0.85em;
+            opacity: 0.85;
+        }
+
+        /* 图表并排布局 */
+        .chart-content-columns {
+            display: flex;
+            gap: 24px;
+            flex-wrap: wrap;
+        }
+
+        /* --- 故事线区域 --- */
+        .story-block {
+            background: transparent;
+            border: none;
+            border-radius: 0;
+            padding: 20px 0;
+            margin-bottom: 16px;
+            max-width: 720px;
+            margin-left: auto;
+            margin-right: auto;
+            width: 100%;
+            position: relative;
+        }
+
+        .story-label {
+            position: absolute;
+            top: -12px;
+            left: 24px;
+            background: var(--accent-cyan);
+            color: #0a0a1a;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 4px 12px;
+            border-radius: 20px;
+            letter-spacing: 0.05em;
+        }
+
+        /* ============================================================
+         *  头图海报
+         * ============================================================ */
+        .hero-poster {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+            background: radial-gradient(ellipse at 50% 40%, rgba(124, 58, 237, 0.15) 0%, transparent 60%),
+                        radial-gradient(ellipse at 30% 70%, rgba(34, 211, 238, 0.08) 0%, transparent 50%),
+                        var(--bg-primary);
+        }
+
+        /* 浮动光晕 */
+        .hero-bg-glow {
+            position: absolute;
+            width: 500px;
+            height: 500px;
+            border-radius: 50%;
+            filter: blur(120px);
+            
+            opacity: 0.4;
+            animation: heroGlowFloat 8s ease-in-out infinite;
+        }
+
+        .hero-bg-glow-2 {
+            animation-delay: -4s;
+            opacity: 0.25;
+            width: 400px;
+            height: 400px;
+        }
+
+        @keyframes heroGlowFloat {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            25% { transform: translate(60px, -40px) scale(1.15); }
+            50% { transform: translate(-30px, 30px) scale(0.9); }
+            75% { transform: translate(-50px, -20px) scale(1.1); }
+        }
+
+        .hero-bg-glow {
+            background: radial-gradient(circle, rgba(124, 58, 237, 0.8) 0%, transparent 70%);
+            top: 20%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .hero-bg-glow-2 {
+            background: radial-gradient(circle, rgba(34, 211, 238, 0.6) 0%, transparent 70%);
+            top: 60%;
+            left: 30%;
+        }
+
+        /* 主内容 */
+        .hero-content {
+            position: relative;
+            z-index: 2;
+            text-align: center;
+            padding: 40px 32px;
+            max-width: 860px;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(124, 58, 237, 0.15);
+            border: 1px solid rgba(167, 139, 250, 0.3);
+            border-radius: 50px;
+            padding: 6px 20px;
+            font-size: 13px;
+            color: var(--accent-glow);
+            letter-spacing: 0.08em;
+            margin-bottom: 32px;
+            animation: heroBadgeIn 1s ease-out;
+        }
+
+        @keyframes heroBadgeIn {
+            0% { opacity: 0; transform: translateY(20px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+
+        .hero-badge-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--accent-cyan);
+            animation: heroDotPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes heroDotPulse {
+            0%, 100% { opacity: 1; box-shadow: 0 0 6px var(--accent-cyan); }
+            50% { opacity: 0.4; box-shadow: 0 0 2px var(--accent-cyan); }
+        }
+
+        .hero-title {
+            font-family: var(--font-heading);
+            font-size: clamp(2.2rem, 5vw, 3.6rem);
+            font-weight: 900;
+            line-height: 1.35;
+            margin-bottom: 24px;
+            animation: heroTitleIn 1s ease-out 0.15s both;
+        }
+
+        @keyframes heroTitleIn {
+            0% { opacity: 0; transform: translateY(30px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+
+        .hero-title-line {
+            display: block;
+        }
+
+        .hero-title-highlight {
+            background: linear-gradient(135deg, #a78bfa 0%, #7c3aed 40%, #22d3ee 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-title-ai {
+            position: relative;
+            display: inline;
+            /* 修复：显式设置渐变填充，防止 inline-block 打断父级 background-clip 继承 */
+            background: linear-gradient(135deg, #a78bfa 0%, #22d3ee 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-title-ai::after {
+            content: '';
+            position: absolute;
+            bottom: 2px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: var(--accent-cyan);
+            opacity: 0.6;
+        }
+
+        .hero-desc {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            line-height: 1.8;
+            margin-bottom: 40px;
+            animation: heroDescIn 1s ease-out 0.3s both;
+        }
+
+        @keyframes heroDescIn {
+            0% { opacity: 0; transform: translateY(20px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+
+        /* 关键数据 */
+        .hero-stats {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 32px;
+            flex-wrap: wrap;
+            margin-bottom: 48px;
+            animation: heroStatsIn 1s ease-out 0.45s both;
+        }
+
+        @keyframes heroStatsIn {
+            0% { opacity: 0; transform: translateY(20px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+
+        .hero-stat-item {
+            text-align: center;
+        }
+
+        .hero-stat-num {
+            font-family: var(--font-heading);
+            font-size: 2.4rem;
+            font-weight: 900;
+            background: linear-gradient(180deg, #fff 0%, #a78bfa 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-stat-unit {
+            font-size: 1rem;
+            -webkit-text-fill-color: var(--accent-glow);
+        }
+
+        .hero-stat-label {
+            display: block;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 6px;
+            line-height: 1.5;
+        }
+
+        .hero-stat-divider {
+            width: 1px;
+            height: 50px;
+            background: var(--border-subtle);
+        }
+
+        /* 滚动提示 */
+        .hero-scroll-hint {
+            animation: heroScrollPulse 2s ease-in-out infinite, heroScrollIn 1s ease-out 0.6s both;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            cursor: pointer;
+        }
+
+        @keyframes heroScrollIn {
+            0% { opacity: 0; }
+            100% { opacity: 1; }
+        }
+
+        @keyframes heroScrollPulse {
+            0%, 100% { opacity: 0.5; transform: translateY(0); }
+            50% { opacity: 1; transform: translateY(8px); }
+        }
+
+        .hero-scroll-arrow {
+            font-size: 1.4rem;
+            margin-top: 4px;
+        }
+
+        /* 浮动标签 */
+        .hero-floating-tag {
+            position: absolute;
+            font-size: 0.85rem;
+            color: rgba(167, 139, 250, 0.4);
+            
+            animation: heroTagFloat 6s ease-in-out infinite;
+            z-index: 1;
+        }
+
+        @keyframes heroTagFloat {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            33% { transform: translateY(-12px) rotate(1deg); }
+            66% { transform: translateY(8px) rotate(-1deg); }
+        }
+
+        /* 玄学装饰元素 */
+        .hero-mystic {
+            position: absolute;  z-index: 3;
+            opacity: 0.2;
+            font-size: 60px;
+            animation: mysticFloat 10s ease-in-out infinite;
+        }
+        @keyframes mysticFloat {
+            0%,100%{transform:translateY(0) rotate(0deg)}
+            25%{transform:translateY(-15px) rotate(5deg)}
+            50%{transform:translateY(5px) rotate(-3deg)}
+            75%{transform:translateY(-8px) rotate(2deg)}
+        }
+        .hero-mystic-ring {
+            position: absolute;  z-index: 0;
+            border: 2px solid rgba(167,139,250,0.15);
+            border-radius: 50%;
+            animation: ringPulse 8s ease-in-out infinite;
+        }
+        @keyframes ringPulse {
+            0%,100%{transform:scale(1);opacity:0.4}
+            50%{transform:scale(1.15);opacity:0.8}
+        }
+        .hero-constellation {
+            position: absolute;  z-index: 0;
+            width: 5px; height: 5px; background: rgba(167,139,250,0.5);
+            border-radius: 50%;
+            box-shadow: 0 0 10px rgba(167,139,250,0.3);
+            animation: starTwinkle 3s infinite alternate;
+        }
+        .hero-constellation::before {
+            content: '';
+            position: absolute;
+            width: 30px; height: 1px;
+            background: linear-gradient(90deg, rgba(167,139,250,0.2), transparent);
+            top: 2px; left: 4px;
+            transform: rotate(-30deg);
+        }
+
+        /* ============================================================
+         *  入口黑屏手机
+         * ============================================================ */
+        .entry-phone-wrapper {
+            display: flex; flex-direction: column; align-items: center;
+            margin-top: 24px; margin-bottom: 24px;
+            position: relative;
+            overflow: visible;
+        }
+        /* 手部贴纸——覆盖在手机上层，握住手机 */
+        /* 手初始隐藏，解锁后手机压在手右上2/3处 */
+        .entry-hand {
+            position: absolute;
+            
+            z-index: -1;
+            width: 360px;
+            bottom: -215px;
+            left: 210px;
+            transform: rotate(55deg);
+            opacity: 0;
+            transition: all 0.8s ease;
+            filter: drop-shadow(0 6px 16px rgba(0,0,0,0.6));
+        }
+        .entry-hand.show {
+            z-index: 15;
+            opacity: 1;
+            transform: rotate(55deg);
+        }
+        .entry-phone {
+            width: 280px; height: 480px;
+            background: #000;
+            border: 4px solid #2d2d4a;
+            border-radius: 32px;
+            cursor: pointer;
+            overflow-y: auto;
+            position: relative; z-index: 20;
+            box-shadow: 0 0 60px rgba(124,58,237,0.15), 0 20px 60px rgba(0,0,0,0.6);
+            transition: all 0.6s cubic-bezier(0.4,0,0.2,1);
+        }
+        .entry-phone:hover {
+            border-color: rgba(124,58,237,0.5);
+            box-shadow: 0 0 80px rgba(124,58,237,0.3), 0 20px 80px rgba(0,0,0,0.7);
+            transform: translateY(-4px);
+        }
+        .entry-phone-screen {
+            width: 100%; height: 100%;
+            position: relative;
+            display: flex; align-items: center; justify-content: center;
+            background: radial-gradient(ellipse at center, #0a0a1a 0%, #000 100%);
+            transition: all 0.8s ease;
+        }
+        .entry-phone-glow {
+            width: 60px; height: 60px; border-radius: 50%;
+            background: radial-gradient(circle, rgba(124,58,237,0.3) 0%, transparent 70%);
+            animation: phonePulse 2s ease-in-out infinite;
+            
+        }
+        @keyframes phonePulse {
+            0%,100%{transform:scale(1);opacity:0.6}
+            50%{transform:scale(1.3);opacity:1}
+        }
+        .entry-phone-click {
+            color: rgba(167,139,250,0.6); font-size: 14px;
+            margin-top: 12px; font-weight: 600;
+            animation: phonePulse 2s ease-in-out infinite;
+        }
+        .entry-phone-hint {
+            color: rgba(255,255,255,0.25); font-size: 11px; margin-top: 2px;
+            letter-spacing: 0.08em;
+        }
+        .entry-phone.unlocked {
+        }
+        .entry-phone iframe {
+            width: 375px; height: 667px; border: none;
+            opacity: 0; transition: opacity 0.6s;
+            pointer-events: none;
+            transform: scale(0.72);
+            transform-origin: 0 0;
+            position: absolute; top: 0; left: 0;
+        }
+        .entry-phone.unlocked .entry-phone-screen { background: transparent; }
+        .entry-phone.unlocked #entryIframe { opacity: 1 !important; pointer-events: auto !important; }
+        /* 手机内半透明滚动条——iframe 需从父级穿透 */
+        #entryIframe { scrollbar-width: thin; scrollbar-color: rgba(167,139,250,0.3) transparent; }
+        /* 父级滚动包裹层 */
+        #iframeScrollWrap { scrollbar-width: thin; scrollbar-color: rgba(167,139,250,0.3) transparent; }
+        #iframeScrollWrap::-webkit-scrollbar { width: 4px; }
+        #iframeScrollWrap::-webkit-scrollbar-track { background: transparent; }
+        #iframeScrollWrap::-webkit-scrollbar-thumb { background: rgba(167,139,250,0.3); border-radius: 4px; }
+        #iframeScrollWrap::-webkit-scrollbar-thumb:hover { background: rgba(167,139,250,0.5); }
+        .entry-phone.unlocked .entry-phone-glow,
+        .entry-phone.unlocked ~ .entry-phone-click,
+        .entry-phone.unlocked ~ .entry-phone-hint { display: none; }
+
+        /* 手机壳外框 */
+        .entry-phone-case {
+            position: relative; z-index: 10;
+            background: linear-gradient(145deg, #2a2a3a, #1a1a2e);
+            border-radius: 38px;
+            padding: 10px;
+            display: inline-block;
+            box-shadow: 0 0 40px rgba(124,58,237,0.15), inset 0 1px 0 rgba(255,255,255,0.05);
+        }
+        /* ============================================================
+         *  手机框样式
+         * ============================================================ */
+        .phone-mockup-wrapper {
+            max-width: 720px;
+            margin: 0 auto 28px;
+            text-align: center;
+        }
+        .phone-mockup {
+            display: inline-block;
+            background: #1a1a2e;
+            border: 3px solid #2d2d4a;
+            border-radius: 36px;
+            padding: 12px;
+            box-shadow: 0 0 40px rgba(124,58,237,0.2), 0 20px 60px rgba(0,0,0,0.5);
+            position: relative;
+        }
+        .phone-notch {
+            width: 120px; height: 24px;
+            background: #0a0a1a;
+            border-radius: 0 0 16px 16px;
+            margin: 0 auto 8px;
+        }
+        .phone-screen {
+            width: 375px; height: 667px;
+            border-radius: 24px;
+            overflow: hidden;
+            background: #0a0a1a;
+        }
+        .phone-screen iframe {
+            width: 100%; height: 100%;
+            border: none;
+        }
+        @media (max-width: 480px) {
+            .phone-screen { width: 300px; height: 534px; }
+        }
+
+        /* ============================================================
+         *  聊天对话框
+         * ============================================================ */
+        .chat-widget {
+            max-width: 600px; margin: 0 auto 28px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 16px;
+            overflow: hidden;
+            position: relative;
+            z-index: 2;
+        }
+        .chat-header {
+            background: rgba(124,58,237,0.15);
+            padding: 14px 20px;
+            display: flex; align-items: center; gap: 10px;
+            border-bottom: 1px solid var(--border-subtle);
+        }
+        .chat-avatar {
+            width: 36px; height: 36px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #7c3aed, #a78bfa);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 18px;
+        }
+        .chat-header-info .chat-name {
+            font-size: 14px; font-weight: 700; color: var(--text-primary);
+        }
+        .chat-header-info .chat-status {
+            font-size: 11px; color: var(--accent-cyan);
+        }
+        .chat-messages {
+            padding: 20px;
+            flex: 1;
+            overflow-y: auto;
+            display: flex; flex-direction: column; gap: 14px;
+        }
+        .chat-bubble {
+            max-width: 75%;
+            padding: 12px 16px;
+            border-radius: 18px;
+            font-size: 14px; line-height: 1.6;
+            animation: chatBubbleIn 0.4s ease-out;
+        }
+        @keyframes chatBubbleIn {
+            0% { opacity: 0; transform: translateY(10px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+        .chat-bubble.user {
+            align-self: flex-end;
+            background: linear-gradient(135deg, #7c3aed, #5b21b6);
+            color: #e0d5f0;
+            border-bottom-right-radius: 6px;
+        }
+        .chat-bubble.ai {
+            align-self: flex-start;
+            background: rgba(34,211,238,0.1);
+            color: #c4b5fd;
+            border: 1px solid rgba(34,211,238,0.2);
+            border-bottom-left-radius: 6px;
+        }
+        .chat-input-area {
+            display: flex; padding: 12px 16px 18px;
+            border-top: 1px solid var(--border-subtle);
+            gap: 10px;
+            background: rgba(0,0,0,0.2);
+            position: relative;
+        }
+        .chat-input {
+            flex: 1;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border-subtle);
+            border-radius: 24px;
+            padding: 10px 18px;
+            color: var(--text-primary);
+            font-size: 14px; outline: none;
+            font-family: var(--font-body);
+        }
+        .chat-input:focus { border-color: var(--accent); }
+        .chat-send-btn {
+            width: 42px; height: 42px;
+            border-radius: 50%;
+            background: var(--accent);
+            border: none; color: #fff;
+            font-size: 18px; cursor: pointer;
+            transition: all 0.3s ease;
+            flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .chat-send-btn:hover {
+            background: #8b5cf6;
+            box-shadow: 0 0 20px rgba(124,58,237,0.5);
+            transform: scale(1.05);
+        }
+        .chat-send-btn:active { transform: scale(0.95); }
+
+        /* ============================================================
+         *  时间轴小人
+         * ============================================================ */
+        .timeline-widget {
+            max-width: 700px; margin: 0 auto 28px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 16px;
+            padding: 32px; text-align: center;
+        }
+        .timeline-figures {
+            display: grid;
+            grid-template-columns: repeat(10, 1fr);
+            gap: 6px; margin-bottom: 20px;
+            justify-items: center;
+        }
+        .timeline-figure {
+            width: 28px; height: 36px;
+            border-radius: 50% 50% 0 0;
+            background: rgba(110,100,145,0.3);
+            transition: all 0.4s ease;
+        }
+        .timeline-figure.lit {
+            background: var(--accent-glow);
+            box-shadow: 0 0 12px rgba(167,139,250,0.6);
+        }
+        .timeline-labels {
+            display: flex; justify-content: space-between;
+            font-size: 12px; color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+        .timeline-slider {
+            width: 100%;
+            -webkit-appearance: none;
+            height: 6px; border-radius: 3px;
+            background: linear-gradient(to right, rgba(34,211,238,0.4), rgba(167,139,250,0.8));
+            outline: none; cursor: pointer;
+        }
+        .timeline-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 24px; height: 24px;
+            border-radius: 50%;
+            background: var(--accent-glow);
+            cursor: pointer;
+            box-shadow: 0 0 12px rgba(167,139,250,0.6);
+        }
+        .timeline-value {
+            margin-top: 12px;
+            font-size: 14px; color: var(--accent-glow); font-weight: 600;
+        }
+
+        /* --- 响应式：移动端导航改为顶部 --- */
+        @media (max-width: 768px) {
+            .side-nav {
+                width: 100%;
+                height: auto;
+                position: fixed;
+                bottom: 0;
+                top: auto;
+                flex-direction: row;
+                overflow-x: auto;
+                padding: 8px 12px;
+                border-right: none;
+                border-top: 1px solid var(--border-subtle);
+                z-index: 100;
+            }
+
+            .nav-header, .nav-footer {
+                display: none;
+            }
+
+            .nav-list {
+                display: flex;
+                gap: 4px;
+                flex: none;
+            }
+
+            .nav-item {
+                padding: 6px 12px;
+                font-size: 11px;
+                white-space: nowrap;
+                border-left: none;
+                border-bottom: 2px solid transparent;
+                border-radius: 20px;
+            }
+
+            .nav-item.active {
+                border-left-color: transparent;
+                border-bottom-color: var(--accent);
+                background: rgba(124, 58, 237, 0.2);
+            }
+
+            .nav-item .nav-number {
+                display: none;
+            }
+
+            .main-content {
+                margin-left: 0;
+                padding-bottom: 70px;
+            }
+
+            .chapter {
+                padding: 40px 20px;
+                min-height: auto;
+            }
+
+            .chapter-title {
+                font-size: 1.6rem;
+            }
+
+            .content-card, .chart-container, .story-block {
+                padding: 24px 20px;
+                border-radius: 12px;
+            }
+
+            /* 移动端头图 */
+            .hero-poster {
+                min-height: 90vh;
+                padding: 20px;
+            }
+
+            .hero-stats {
+                gap: 16px;
+            }
+
+            .hero-stat-num {
+                font-size: 1.6rem;
+            }
+
+            .hero-stat-divider {
+                height: 36px;
+            }
+
+            .hero-floating-tag {
+                display: none;
+            }
+
+            .chart-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- ==================== 星空背景 ==================== -->
+    <div class="stars-container" id="starsContainer" style="display:none"></div>
+
+    <!-- ==================== 侧边导航 ==================== -->
+    <nav class="side-nav" id="sideNav">
+        <div class="nav-header">
+            <div class="nav-title">🔮 赛博玄学走红</div>
+            <div class="nav-subtitle">数据新闻</div>
+        </div>
+        <ul class="nav-list">
+            <a class="nav-item active" href="#chapter0" data-nav="0">
+                <span class="nav-number">0</span>开篇故事
+            </a>
+            <a class="nav-item" href="#chapter1" data-nav="1">
+                <span class="nav-number">1</span>AI算命走红
+            </a>
+            <a class="nav-item" href="#chapter2" data-nav="2">
+                <span class="nav-number">2</span>用户画像
+            </a>
+            <a class="nav-item" href="#chapter3" data-nav="3">
+                <span class="nav-number">3</span>为什么使用AI算命
+            </a>
+            <a class="nav-item" href="#chapter4" data-nav="4">
+                <span class="nav-number">4</span>为何感觉"准"
+            </a>
+            <a class="nav-item" href="#chapter5" data-nav="5">
+                <span class="nav-number">5</span>风险与变现
+            </a>
+            <a class="nav-item" href="#chapter6" data-nav="6">
+                <span class="nav-number">6</span>谁来掌舵
+            </a>
+        </ul>
+        <div class="nav-footer">
+            基于自采问卷 · 公开数据 · 社交平台分析
+        </div>
+    </nav>
+
+
+    <!-- ==================== 主内容区 ==================== -->
+    <div class="main-content">
+
+        <!-- ====== 头图海报 ====== -->
+        <section class="hero-poster" id="hero">
+            <div class="hero-bg-glow"></div>
+            <div class="hero-bg-glow hero-bg-glow-2"></div>
+            <div class="hero-content">
+                <div class="hero-badge">
+                    <span class="hero-badge-dot"></span>
+                    数据新闻
+                </div>
+                <h1 class="hero-title">
+                    <span class="hero-title-line">赛博玄学走红：</span>
+                    <span class="hero-title-line hero-title-highlight">
+                        这届年轻人<span class="hero-title-ai">在用AI</span>"算"什么？
+                    </span>
+                </h1>
+                <p class="hero-desc">
+                    从失业焦虑到AI算命，从边缘话题到百亿赛道——<br>
+                    一项关于"确定性"的时代调查
+                </p>
+                <div class="hero-stats">
+                    <div class="hero-stat-item">
+                        <span class="hero-stat-num">120<span class="hero-stat-unit">亿+</span></span>
+                        <span class="hero-stat-label">2024中国AI玄学<br>市场规模</span>
+                    </div>
+                    <div class="hero-stat-divider"></div>
+                    <div class="hero-stat-item">
+                        <span class="hero-stat-num">74.1<span class="hero-stat-unit">%</span></span>
+                        <span class="hero-stat-label">用户首要原因<br>缓解焦虑</span>
+                    </div>
+                    <div class="hero-stat-divider"></div>
+                    <div class="hero-stat-item">
+                        <span class="hero-stat-num">88.3<span class="hero-stat-unit">%</span></span>
+                        <span class="hero-stat-label">集中在90后<br>至00后</span>
+                    </div>
+                </div>
+            </div>
+            <!-- 浮动标签 -->
+            <div class="hero-floating-tag" style="top:18%;left:8%;animation-delay:0s;">🔮 AI塔罗</div>
+            <div class="hero-floating-tag" style="top:25%;right:10%;animation-delay:0.8s;">✨ 星座运势</div>
+            <div class="hero-floating-tag" style="top:55%;left:6%;animation-delay:1.6s;">💫 八字解析</div>
+            <div class="hero-floating-tag" style="top:50%;right:8%;animation-delay:2.4s;">🌟 AI面相</div>
+            <div class="hero-floating-tag" style="bottom:25%;left:12%;animation-delay:3.2s;">🌙 赛博占卜</div>
+            <div class="hero-floating-tag" style="bottom:20%;right:12%;animation-delay:1.2s;">💎 数字能量</div>
+        </section>
+
+
+            <!-- 入口黑屏手机 + 手部贴纸 -->
+        <div class="entry-phone-wrapper" id="entryPhoneWrapper">
+            <img class="entry-hand" id="entryHand" src="手2.png" alt="手">
+            <div class="entry-phone" id="entryPhone" onclick="unlockPhone()">
+                <div class="entry-phone-screen" onclick="unlockPhone()">
+                    <div class="entry-phone-glow"></div>
+                    <div id="iframeScrollWrap" style="position:absolute;top:0;left:0;width:100%;height:100%;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;">
+                        <iframe id="entryIframe" src="about:blank" data-src="index.html" scrolling="no" style="width:375px;height:1800px;border:none;opacity:0;transition:opacity 0.6s;transform:scale(0.72);transform-origin:0 0;display:block;"></iframe>
+                    </div>
+                </div>
+            </div>
+            <div class="entry-phone-click">👆 点击</div>
+            <div class="entry-phone-hint">点击手机屏幕开始体验</div>
+        </div>
+
+        <!-- ====== 第0章：开篇故事 ====== -->
+        <section class="chapter" id="chapter0">
+            <div class="chapter-header">
+                <div class="chapter-number">PROLOGUE</div>
+                <h1 class="chapter-title">赛博玄学走红：<br>这届年轻人在用AI"算"什么？</h1>
+            </div>
+
+            <!-- 绿色故事线 -->
+            <div class="story-block">
+                <p style="color:#c4b5fd;font-style:italic;">
+                    2026年3月，上海。26岁的林晓已失业满一年。过去一年，她投递了上百份简历，
+                    多数石沉大海；整个3月，她连一封有效的面试邀请都没收到。焦虑中，
+                    她在社交平台看到不少人分享AI算命经历，于是她打开了刚下好的AI算命软件……
+                </p>
+            </div>
+
+            <!-- 聊天交互（手机外框） -->
+            <div style="display:flex;justify-content:center;margin-bottom:20px;">
+            <div style="background:#1a1a2e;border:3px solid #2d2d4a;border-radius:28px;padding:6px;box-shadow:0 0 30px rgba(124,58,237,0.15);width:350px;height:420px;">
+            <div class="chat-widget" id="chatWidget" style="margin-bottom:0;border-radius:20px;overflow:hidden;width:100%;height:100%;display:flex;flex-direction:column;">
+                <div class="chat-header">
+                    <div class="chat-avatar">🤖</div>
+                    <div class="chat-header-info">
+                        <div class="chat-name">AI算命助手</div>
+                        <div class="chat-status">在线</div>
+                    </div>
+                </div>
+                <div class="chat-messages" id="chatMessages"></div>
+                <div class="chat-input-area">
+                    <input type="text" class="chat-input" id="chatInput"
+                           value="请你用最靠谱的方式，测算我何时能拿到满意offer。"
+                           placeholder="输入你的问题..."
+                           readonly>
+                    <button class="chat-send-btn" id="chatSendBtn" title="发送" onclick="sendChatMessage()">➤</button>
+                    <span class="send-hint" id="sendHint" style="position:absolute;right:16px;bottom:-22px;color:#f59e0b;font-size:10px;font-weight:bold;animation:phonePulse 2s infinite;white-space:nowrap;">👆 点击发送键</span>
+                </div>
+            </div>
+            </div>
+            </div>
+
+            <!-- 聊天脚本（独立运行，不依赖主JS区块） -->
+            <script>
+            (function() {
+                var sent = false;
+                window.sendChatMessage = function() {
+                    if (sent) return;
+                    var hint = document.getElementById('sendHint');
+                    if (hint) hint.style.display = 'none';
+                    var inp = document.getElementById('chatInput');
+                    var msg = document.getElementById('chatMessages');
+                    var btn = document.getElementById('chatSendBtn');
+                    var txt = inp.value.trim();
+                    if (!txt) return;
+                    sent = true;
+
+                    var ub = document.createElement('div');
+                    ub.className = 'chat-bubble user';
+                    ub.textContent = txt;
+                    msg.appendChild(ub);
+
+                    inp.value = '';
+                    if (btn) { btn.style.opacity = '0.5'; btn.style.pointerEvents = 'none'; }
+
+                    setTimeout(function() {
+                        var ab = document.createElement('div');
+                        ab.className = 'chat-bubble ai';
+                        ab.textContent = '根据命理推算，农历三月（约公历4月），你的人生将会迎来转机。4月10日前可获正式录用通知，5月15日前可入职。4月面试机会将明显增加。你其实是个很要强的人，能扛得住事，只是暂时缺少一个时机。';
+                        msg.appendChild(ab);
+                        msg.scrollTop = msg.scrollHeight;
+                        sent = false;
+                        if (btn) { btn.style.opacity = '1'; btn.style.pointerEvents = 'auto'; }
+                    }, 1200);
+
+                    msg.scrollTop = msg.scrollHeight;
+                };
+            })();
+            </script>
+
+            <!-- 黑色正文 -->
+            <div class="content-card">
+                <p>小林打开市面上流行的算命app，尝试向AI提问：<em>"请你用最靠谱的方式，测算我何时能拿到满意offer。"</em></p>
+                <p>AI的回答给出了明确时间节点：农历三月，你的人生将会迎来转机，4月10日前可获正式录用通知，5月15日前可入职；同时提示，4月面试机会将明显增加。<span class="highlight">你其实是个很要强的人，能扛得住事，只是暂时缺少一个时机。</span></p>
+            </div>
+
+            <div class="content-card">
+                <p>此后的一个多月，林晓每天起床第一件事情就是打开AI查看运势，面试前也会反复确认"吉凶"运势。她习惯将AI预测截图保存，手机壁纸也换成了AI生成的"offer好运图"。</p>
+
+            <div style="text-align:center;margin:8px 0;">
+            <img id="imgLuck" src="好运.png" style="width:300px;position:relative;left:-31px;top:-4px;opacity:0;transition:opacity 0.8s ease;">
+            </div>
+            <script>
+            (function(){
+                var img = document.getElementById('imgLuck');
+                if (!img) return;
+                var obs = new IntersectionObserver(function(entries){
+                    if (entries[0].isIntersecting) { img.style.opacity = '1'; obs.disconnect(); }
+                }, { threshold: 0.2 });
+                obs.observe(img);
+            })();
+            </script>
+
+            <!-- 付费解锁手机交互 -->
+            <div class="paywall-phone" id="paywallPhone" style="opacity:0;transition:opacity 0.8s ease;">
+                <div class="paywall-screen">
+                    <div class="paywall-title">🔮 是否查看今日AI运势？</div>
+                    <div class="paywall-btns" id="paywallBtns">
+                        <button class="paywall-btn view" onclick="showPaywallResult()">👁️ 查看</button>
+                        <button class="paywall-btn skip" onclick="hidePaywall()">🚫 不查看</button>
+                    </div>
+                    <div class="paywall-result" id="paywallResult" style="display:none">
+                        <p class="paywall-clear">✨ 今日运势爆棚！但仍需注意...</p>
+                        <div class="paywall-blur">
+                            <p>避免冲动消费，尤其是在下午3点后。今日适合与旧友联系，可能会获得意外的机会。感情方面需要多一些耐心...</p>
+                            <div class="paywall-lock">🔒 请支付9.9元解锁全文</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <style>
+            .paywall-phone { max-width:360px; margin:0 auto 20px; background:#0a0a1a; border:3px solid #2d2d4a; border-radius:24px; padding:8px; }
+            .paywall-screen { background:linear-gradient(180deg,#0d0d22,#16163a); border-radius:18px; padding:24px 18px; text-align:center; min-height:200px; }
+            .paywall-title { color:#c4b5fd; font-size:14px; font-weight:bold; margin-bottom:20px; }
+            .paywall-btns { display:flex; gap:12px; justify-content:center; }
+            .paywall-btn { padding:10px 28px; border-radius:20px; font-size:13px; font-weight:bold; cursor:pointer; border:none; transition:all 0.3s; }
+            .paywall-btn.view { background:#7c3aed; color:#fff; }
+            .paywall-btn.view:hover { background:#8b5cf6; transform:scale(1.05); }
+            .paywall-btn.skip { background:transparent; color:#a89bc4; border:1px solid rgba(167,139,250,0.3); }
+            .paywall-btn.skip:hover { border-color:#a78bfa; color:#fff; }
+            .paywall-clear { color:#22d3ee; font-size:16px; font-weight:bold; margin-bottom:12px; }
+            .paywall-blur { position:relative; }
+            .paywall-blur p { filter:blur(6px); color:#a89bc4; font-size:13px; line-height:1.8; user-select:none; }
+            .paywall-lock { position:absolute; top:50%;left:50%;transform:translate(-50%,-50%); color:#ef4444; font-size:14px; font-weight:bold; background:rgba(10,10,26,0.9); padding:8px 16px; border-radius:8px; border:1px solid rgba(239,68,68,0.3); white-space:nowrap; }
+            </style>
+            <script>
+            var paywallDone = false;
+            function showPaywallResult() {
+                if (paywallDone) return;
+                paywallDone = true;
+                document.getElementById('paywallBtns').style.display = 'none';
+                document.getElementById('paywallResult').style.display = 'block';
+                unlockChapters();
+            }
+            (function(){
+                var pw = document.getElementById('paywallPhone');
+                if (!pw) return;
+                var obs = new IntersectionObserver(function(e){ if(e[0].isIntersecting){ pw.style.opacity='1'; obs.disconnect(); } }, {threshold:0.15});
+                obs.observe(pw);
+            })();
+            function hidePaywall() {
+                if (paywallDone) return;
+                paywallDone = true;
+                document.getElementById('paywallBtns').innerHTML = '<span style="color:#6e6491;font-size:13px;">已跳过</span>';
+                unlockChapters();
+                // 滚动到第1章
+                setTimeout(function(){ document.getElementById('chapter1').scrollIntoView({behavior:'smooth'}); }, 300);
+            }
+            function unlockChapters() {
+                document.body.classList.add('unlocked');
+                var chapters = document.querySelectorAll('.chapter');
+                chapters.forEach(function(c,i){
+                    c.style.animation = 'stepFadeIn 0.5s ease-out ' + (i * 0.08) + 's both';
+                });
+            }
+            </script>
+            </div>
+        </section>
+
+        <!-- ====== 第1章：AI算命走红 ====== -->
+        <section class="chapter" id="chapter1">
+            <img id="imgTarot" src="塔罗师.png" style="position:absolute;left:720px;top:-108px;width:300px;opacity:0;pointer-events:none;z-index:0;filter:grayscale(0.3);transition:opacity 1s ease;">
+            <script>(function(){var im=document.getElementById('imgTarot');if(!im)return;var o=new IntersectionObserver(function(e){if(e[0].isIntersecting){im.style.opacity='1';o.disconnect();}},{threshold:0.1});o.observe(im);})();</script>
+            <div class="chapter-header">
+                <div class="chapter-number">CHAPTER 1</div>
+                <h2 class="chapter-title">你也在用AI算命吗？</h2>
+                <p class="chapter-subtitle">AI算命走红：从边缘话题到百亿赛道</p>
+            </div>
+
+            <!-- 绿色故事线 -->
+            <div class="story-block">
+                <p style="color:#c4b5fd;font-style:italic;">
+                    AI的回答给出了明确时间节点：农历三月，你的人生将会迎来转机，4月10日前可获正式录用通知，5月15日前可入职；同时提示，4月面试机会将明显增加。你其实是个很要强的人，能扛得住事，只是暂时缺少一个时机。
+                </p>
+            </div>
+
+            <!-- 时间轴小人交互 -->
+            <div class="timeline-widget" id="timelineWidget">
+                <div class="chart-title">🙋 过去 vs 现在：有多少人相信算命？</div>
+                <div class="timeline-figures" id="timelineFigures"></div>
+                <div class="timeline-labels">
+                    <span>📅 1996-2003<br>（科协调查）</span>
+                    <span>📅 2024-现在<br>（玄学未来）</span>
+                </div>
+                <input type="range" class="timeline-slider" id="timelineSlider" min="0" max="100" value="0">
+                <div class="timeline-value" id="timelineValue">拖动滑块，看相信算命的人数变化 → 当前：约3亿人</div>
+            </div>
+
+            <!-- 黑色正文 -->
+            <div class="content-card">
+                <p>1996年到2003年的7年间，中国科学技术协会曾就算命进行过三次调查，结果显示，<span class="highlight">每四个中国人里面，至少有一个人相信算命</span>，总人数超过3亿人。</p>
+                <p>二十多年后，中国的算命用户也并没有减少。2024年中国AI玄学（含AI算命）市场规模已突破<span class="stat-big">120</span>亿元，年增长率达<span class="highlight">43.7%</span>。</p>
+            </div>
+
+            <!-- 图表：全球灵性市场 + 使用频率 并排 -->
+            <div class="chart-grid">
+            <div class="chart-container" style="cursor:pointer;" title="点击播放动画">
+                <div class="chart-title">🌍 全球灵性产品与服务市场规模（亿美元）</div>
+                <canvas id="chartGlobalMarket" width="720" height="360"></canvas>
+                <div class="chart-source">数据来源：艾媒咨询（iiMedia Research）</div>
+            </div>
+
+            <div class="chart-container" onclick="var cv=this.querySelector(\"canvas\");if(cv&&cv._chart){var cfg=cv._chart.config;cv._chart.destroy();cv._chart=new Chart(cv,cfg);}">
+                <div class="chart-title">📊 赛博算命使用频率分布</div>
+                <canvas id="chartUsageFreq" width="600" height="320"></canvas>
+                <div class="chart-source">数据来源：西安欧亚学院文化传媒学院新传工坊《赛博玄学年度大赏》</div>
+            </div>
+            </div>
+
+            <div class="content-card">
+                <p>一个值得注意的变化藏在数据里：仅体验一次的用户占43.1%，而每天使用一次或多次的用户高达<span class="highlight">47.41%</span>。将"仅体验一次"与"每日使用"两组数据并置，一个行为层面的跃迁清晰可见——<span class="highlight">AI算命已从一次性好奇，转变为日常化依赖。</span></p>
+                <p>这一转变的底层逻辑并不复杂：AI降低了算命服务的获取门槛（免费、即时、匿名），同时放大了"确定性输出"的心理安慰功能。</p>
+            </div>
+
+            <!-- 图表：最受欢迎玄学科目 + 服务类型占比 并排 -->
+            <div class="chart-grid">
+            <div class="chart-container" onclick="var cv=this.querySelector(\"canvas\");if(cv&&cv._chart){var cfg=cv._chart.config;cv._chart.destroy();cv._chart=new Chart(cv,cfg);}">
+                <div class="chart-title">🔥 最受欢迎的玄学科目（抖音话题播放量/亿）</div>
+                <canvas id="chartSubjects" width="680" height="400"></canvas>
+                <div style="display:flex;justify-content:center;gap:24px;margin-top:8px;font-size:12px;">
+                    <span><span style="display:inline-block;width:14px;height:14px;background:#a78bfa;border-radius:3px;vertical-align:middle;margin-right:4px;"></span>🟣 东方玄学</span>
+                    <span><span style="display:inline-block;width:14px;height:14px;background:#22d3ee;border-radius:3px;vertical-align:middle;margin-right:4px;"></span>🔵 西方玄学</span>
+                </div>
+                <div class="chart-source">数据来源：抖音平台话题数据</div>
+            </div>
+
+            <div class="chart-container" onclick="var cv=this.querySelector(\"canvas\");if(cv&&cv._chart){var cfg=cv._chart.config;cv._chart.destroy();cv._chart=new Chart(cv,cfg);}">
+                <div class="chart-title">⚖️ 参与赛博玄学的服务类型占比</div>
+                <canvas id="chartServiceTypes" width="680" height="380"></canvas>
+                <div class="chart-source">数据来源：西安欧亚学院文化传媒学院新传工坊《赛博玄学年度大赏》</div>
+            </div>
+            </div>
+
+            <div class="content-card">
+                <p>"星座罗盘"以<span class="highlight">41.7%</span>的占比位居榜首；"塔罗牌占卜"占比36.4%紧随其后，两者合计占比超七成。而"周公解梦"、"姓名测命"、"手相测命"等中式传统算命方式占比则相对分散，均未超过25%。</p>
+                <p>AI对中式命理和西式占卜的训练数据均可供给，差异的根源或许在于传播生态。星座、塔罗在新媒体平台拥有更成熟的创作者生态、更低的认知门槛和更"轻"的使用体验，更容易嵌入碎片化的数字生活。而中式命理涉及八字排盘、五行生克等知识体系，学习曲线较陡，AI化后仍带有较重的"专业门槛感"。</p>
+            </div>
+            <div class="chart-container">
+                <div class="chart-title">🗺️ AI算命相关评论IP热度分布图</div>
+                <div style="text-align:center;margin-bottom:12px;">
+                    <button id="btnXHS" class="heatmap-toggle active" onclick="switchHeatmap('xhs')" style="padding:8px 24px;border:2px solid #a78bfa;background:#a78bfa;color:#fff;border-radius:20px 0 0 20px;cursor:pointer;font-size:13px;font-weight:bold;transition:all 0.3s;">📕 小红书评论热度</button
+                    ><button id="btnTB" class="heatmap-toggle" onclick="switchHeatmap('tieba')" style="padding:8px 24px;border:2px solid rgba(167,139,250,0.4);background:transparent;color:#a89bc4;border-radius:0 20px 20px 0;cursor:pointer;font-size:13px;transition:all 0.3s;">📋 贴吧评论热度</button>
+                </div>
+                <div id="chartIPHeatmap" style="width:720px;height:500px;margin:0 auto;"></div>
+                <div class="chart-source" id="heatmapSource">数据来源：小红书平台AI算命相关评论IP属地统计</div>
+            </div>
+
+            <!-- 热帖评论手机模拟 -->
+            <div class="post-phone" id="postPhone" onclick="unlockAllChapters()">
+                <div class="post-header">📱 AI算命话题 · 热帖</div>
+                <div class="post-content">
+                    <div class="post-user"><b>@momo</b> · IP: 广东</div>
+                    <p>用DeepSeek算了一下八字，说今年运势特别好！有没有人试过？准不准啊？</p>
+                    <div class="post-stats">❤️ 2.3k &nbsp; 💬 586 &nbsp; 🔄 329</div>
+                </div>
+                <div class="post-comments" id="postComments" style="display:none;">
+                    <div class="comment"><b>@霖Y</b> · IP: 江苏：我试过！算的还挺准的，连我做什么工作都知道</div>
+                    <div class="comment"><b>@Glitchstar</b> · IP: 浙江：好吓人......我刚拿AI问完八字就给我推这个</div>
+                    <div class="comment"><b>@离</b> · IP: 上海：AI算的真的准，连我擅长什么都知道</div>
+                    <div class="comment"><b>@学习使我快乐</b> · IP: 北京：别太当真了，巴纳姆效应了解一下</div>
+                    <div class="comment"><b>@小红薯</b> · IP: 四川：我去试了，说我今年会升职加薪，期待ing</div>
+                    <div class="comment"><b>@用户已注销</b> · IP: 湖北：已三连，求回踩~</div>
+                    <div class="comment"><b>@momo大虾</b> · IP: 山东：感觉AI比街边算命老头靠谱多了...</div>
+                </div>
+                <div class="post-tap-hint" id="postHint">👆 点击查看586条评论</div>
+            </div>
+            <style>
+            .post-phone { max-width:380px; margin:0 auto 20px; background:#1a1a2e; border:2px solid #2d2d4a; border-radius:20px; padding:16px; cursor:pointer; transition:all 0.4s; }
+            .post-phone:hover { border-color:#a78bfa; }
+            .post-header { color:#a78bfa; font-size:12px; font-weight:bold; margin-bottom:10px; border-bottom:1px solid rgba(124,58,237,0.2); padding-bottom:8px; }
+            .post-user { color:#6e6491; font-size:11px; margin-bottom:6px; }
+            .post-content p { color:#c4b5fd; font-size:14px; line-height:1.6; margin-bottom:8px; }
+            .post-stats { color:#6e6491; font-size:11px; }
+            .post-comments { border-top:1px solid rgba(124,58,237,0.2); margin-top:10px; padding-top:10px; }
+            .comment { color:#a89bc4; font-size:12px; padding:8px 0; border-bottom:1px solid rgba(255,255,255,0.04); line-height:1.5; }
+            .comment b { color:#c4b5fd; }
+            .post-tap-hint { text-align:center; color:#f59e0b; font-size:12px; margin-top:10px; animation:phonePulse 2s infinite; }
+            </style>
+            <script>
+            function unlockAllChapters() {
+                var comments = document.getElementById('postComments');
+                var hint = document.getElementById('postHint');
+                if (comments.style.display === 'none') {
+                    comments.style.display = 'block';
+                    hint.textContent = '📖 已查看评论 · 解锁后续章节';
+                    hint.style.animation = 'none';
+                    hint.style.color = '#22d3ee';
+                    document.body.classList.add('unlocked');
+                    document.body.classList.add('all-shown');
+                }
+            }
+            </script>
+        </section>
+
+        <!-- ====== 第2章：用户画像 ====== -->
+        <section class="chapter" id="chapter2">
+            <div class="chapter-header">
+                <div class="chapter-number">CHAPTER 2</div>
+                <h2 class="chapter-title">谁在使用AI算命？</h2>
+                <p class="chapter-subtitle">AI算命背后的用户画像</p>
+            </div>
+
+            <!-- 绿色故事线 -->
+            <div class="story-block">
+                <p style="color:#c4b5fd;font-style:italic;">
+                    林晓从未走进线下命理馆，也未预约过心理咨询。线下占卜单次收费数百至千元，心理咨询价格更高，她需要对着一个陌生人倾诉自己的失业困境，这种方式带来的窘迫感令她难以接受。专业心理服务的高门槛，使她转向了这个更隐蔽、低成本的情绪出口。
+                </p>
+            </div>
+
+            <div style="text-align:center;margin:24px 0;">
+                <img src="匿名.jpg" alt="匿名心理咨询" style="width:280px;border-radius:12px;opacity:0.9;">
+            </div>
+
+            <!-- 黑色正文 -->
+            <div class="content-card">
+                <p>AI算命恰好完美契合了她的核心诉求：<span class="highlight">免费、即时、匿名、无评判</span>。无需预约、无需暴露身份，深夜情绪崩溃时也可随时获得回应；基础功能零成本，无需担心经济负担。她并不认为AI"更准"或"更客观"，她只是需要一个安全、无压力的表达空间。</p>
+            </div>
+
+            <!-- 图表：AI算命使用情况 -->
+            <div class="chart-container" onclick="var cv=this.querySelector(\"canvas\");if(cv&&cv._chart){var cfg=cv._chart.config;cv._chart.destroy();cv._chart=new Chart(cv,cfg);}">
+                <div class="chart-title">📱 你使用过AI算命工具吗？</div>
+                <canvas id="chartUsage" width="300" height="260" style="display:block;margin:0 auto;"></canvas>
+                <div class="chart-source">数据来源：问卷调查（N=120）</div>
+            </div>
+
+            <!-- 图表：性别 + 年龄 -->
+            <div style="display:flex;gap:20px;flex-wrap:wrap;max-width:900px;margin:0 auto 28px;">
+                <div class="chart-container" style="flex:1;min-width:280px;margin-bottom:0;padding:24px 20px;">
+                    <div class="chart-title">👥 性别分布</div>
+                    <canvas id="chartGender" width="280" height="260" style="width:280px;height:260px;display:block;margin:0 auto;"></canvas>
+                    <div class="chart-source">数据来源：《2025年轻人玄学消费报告》</div>
+                </div>
+                <div class="chart-container" style="flex:1.5;min-width:400px;margin-bottom:0;padding:24px 20px;">
+                    <div class="chart-title">📊 年龄分布</div>
+                    <canvas id="chartAge" width="400" height="260" style="width:400px;height:260px;display:block;margin:0 auto;"></canvas>
+                    <div class="chart-source">数据来源：《2025年轻人玄学消费报告》</div>
+                </div>
+            </div>
+
+            <div class="content-card">
+                <p>赛博玄学的用户以<span class="highlight">女性为主（77.5%）</span>，年龄集中在95后、00后、90后（合计<span class="highlight">88.3%</span>）。赛博玄学的使用群体主要集中在年轻群体，随着时代发展，年轻人已经习惯将玄学作为一种精神寄托之一。</p>
+            </div>
+
+            <!-- 图表：寻求原因 + 年轻人玄学行为TOP10 并排 -->
+            <div class="chart-grid">
+            <div class="chart-container" onclick="var cv=this.querySelector(\"canvas\");if(cv&&cv._chart){var cfg=cv._chart.config;cv._chart.destroy();cv._chart=new Chart(cv,cfg);}">
+                <div class="chart-title">💭 寻求赛博玄学的原因分布</div>
+                <canvas id="chartReasons" width="520" height="300"></canvas>
+                <div class="chart-source">数据来源：西安欧亚学院文化传媒学院新传工坊《赛博玄学年度大赏》</div>
+            </div>
+
+            <div class="chart-container" onclick="var cv=this.querySelector(\"canvas\");if(cv&&cv._chart){var cfg=cv._chart.config;cv._chart.destroy();cv._chart=new Chart(cv,cfg);}">
+                <div class="chart-title">🏆 年轻人玄学行为TOP10</div>
+                <canvas id="chartTop10" width="640" height="520"></canvas>
+                <div class="chart-source">数据来源：西安欧亚学院文化传媒学院新传工坊《赛博玄学年度大赏》</div>
+            </div>
+            </div>
+
+            <!-- 图表：男女压力对比 -->
+            <div class="chart-container" onclick="var cv=this.querySelector(\"canvas\");if(cv&&cv._chart){var cfg=cv._chart.config;cv._chart.destroy();cv._chart=new Chart(cv,cfg);}">
+                <div class="chart-title">⚡ 男女压力类型对比</div>
+                <canvas id="chartPressureGender" width="650" height="320"></canvas>
+                <div class="chart-source">数据来源：《2026青年情绪白皮书》</div>
+            </div>
+
+            <div class="content-card">
+                <p>女性心理压力（35.9%）高出男性（25.6%）10.3个百分点。两组数据叠加指向一个事实：<span class="highlight">AI算命的主要使用者，恰恰是感知心理压力更高的群体。</span></p>
+            </div>
+
+            <!-- 聊天气泡：真实用户感受 -->
+            <div style="max-width:420px;margin:20px auto 28px;padding:0 12px;">
+                <p style="color:#a89bc4;font-size:12px;text-align:center;margin-bottom:12px;">💬 用户们为什么选择AI算命？</p>
+                <div onclick="revealChats()" style="cursor:pointer;">
+                    <div class="chat-bubble-left" style="margin-bottom:10px;"><div class="chat-blur-text">最近压力太大了，AI算命至少能让我短暂放松一下，感觉有人懂我...</div><div style="font-size:9px;color:#6e6491;margin-top:3px;">IP: 广东 · 学生</div></div>
+                    <div class="chat-bubble-right" style="margin-bottom:10px;"><div class="chat-blur-text">对未来太迷茫了，AI给我一个明确的方向，哪怕不准，心里也踏实</div><div style="font-size:9px;color:#6e6491;text-align:right;margin-top:3px;">IP: 浙江 · 待业</div></div>
+                    <div class="chat-bubble-left" style="margin-bottom:10px;"><div class="chat-blur-text">考试压力太大了，算一算缓解焦虑，反正又不要钱...</div><div style="font-size:9px;color:#6e6491;margin-top:3px;">IP: 江苏 · 考研党</div></div>
+                    <div class="chat-bubble-right" style="margin-bottom:10px;"><div class="chat-blur-text">比起找真人算命被评判，AI更让我敢说真心话</div><div style="font-size:9px;color:#6e6491;text-align:right;margin-top:3px;">IP: 北京 · 职场新人</div></div>
+                </div>
+                <p id="chatHint" style="color:#f59e0b;font-size:10px;text-align:center;animation:phonePulse 2s infinite;">👆 点击任意气泡查看真实想法</p>
+            </div>
+            <style>
+            .chat-bubble-left, .chat-bubble-right { max-width:75%; padding:12px 16px; border-radius:18px; }
+            .chat-bubble-left { background:rgba(124,58,237,0.15); border-bottom-left-radius:6px; }
+            .chat-bubble-right { background:rgba(34,211,238,0.1); border-bottom-right-radius:6px; margin-left:25%; }
+            .chat-blur-text { filter:blur(4px); color:#a89bc4; font-size:13px; line-height:1.6; user-select:none; transition:filter 0.4s; }
+            .revealed .chat-blur-text { filter:none; color:#e0d5f0; }
+            </style>
+            <script>
+            function revealChats() {
+                if (document.querySelector('.revealed')) return;
+                document.querySelector('.chat-bubble-left').parentElement.classList.add('revealed');
+                var hint = document.getElementById('chatHint');
+                hint.textContent = '✅ 已查看 · 向下继续阅读';
+                hint.style.color = '#22d3ee'; hint.style.animation = 'none';
+                document.body.classList.add('ch3up');
+                setTimeout(function(){ document.getElementById('chapter3').scrollIntoView({behavior:'smooth'}); }, 500);
+            }
+            </script>
+        </section>
+
+        <!-- ====== 第3章：为什么使用AI算命 ====== -->
+        <section class="chapter" id="chapter3">
+            <div class="chapter-header">
+                <div class="chapter-number">CHAPTER 3</div>
+                <h2 class="chapter-title">我们为什么使用AI算命</h2>
+                <p class="chapter-subtitle">基于AI算命的青年压力调查</p>
+            </div>
+
+            <!-- 绿色故事线 -->
+            <div class="story-block">
+                <p style="color:#c4b5fd;font-style:italic;">
+                    失业一年，积蓄递减，房租压力；每每与母亲通电，她总是习惯性谎称自己"工作顺利、一切都好"；朋友圈里，同龄人有的升职，工作稳定；有的结婚，生活安定，而自己却仍停滞不前。这种落差与不确定感，给她带来了持续的心理内耗。
+                </p>
+            </div>
+
+            <div style="text-align:center;margin:24px 0;">
+                <img src="备战.jpg" alt="备战" style="width:280px;border-radius:12px;opacity:0.9;">
+            </div>
+
+            <!-- 黑色正文 -->
+            <div class="content-card">
+                <p>林晓的焦虑，并非来自某一次事件的失败，而是来源于长期对生活的失控感。当现实世界的不确定性遭遇经济下行周期，年轻人正在虚拟世界寻找确定性寄托。AI算命提供的"未来预览"功能，本质上是对抗焦虑的心理缓释剂。</p>
+            </div>
+
+            <!-- 图表：压力程度 + 压力来源 并排 -->
+            <div class="chart-grid">
+            <div class="chart-container" style="overflow:visible;">
+                <div class="chart-title">😰 过去三个月，你感受到的整体压力程度是？</div>
+                <div id="chartStressLevel" style="width:480px;max-width:100%;height:480px;margin:0 auto;cursor:default;"></div>
+                <div class="chart-source">数据来源：问卷调查（N=120）</div>
+            </div>
+
+            <div class="chart-container" onclick="var cv=this.querySelector(\"canvas\");if(cv&&cv._chart){var cfg=cv._chart.config;cv._chart.destroy();cv._chart=new Chart(cv,cfg);}">
+                <div class="chart-title">📋 你的压力主要来源？</div>
+                <canvas id="chartStressSource" width="500" height="280"></canvas>
+                <div class="chart-source">数据来源：问卷调查（N=120）</div>
+            </div>
+            </div>
+
+            <div class="content-card">
+                <p>在我们的问卷中，<span class="highlight">97%</span>的青年能感知到身边存在压力，<span class="highlight">62.8%</span>处于中高压力状态。每4人中就有1人出现焦虑症状，每2人中就有1人存在抑郁风险。这些数字并非一线城市的专属标签——二三线城市乃至其他地区的青年，中高压力比例同样超过50%。</p>
+            </div>
+
+            <!-- 图表：核心压力源排名 -->
+            <div class="chart-container" onclick="var cv=this.querySelector(\"canvas\");if(cv&&cv._chart){var cfg=cv._chart.config;cv._chart.destroy();cv._chart=new Chart(cv,cfg);}">
+                <div class="chart-title">🎯 核心压力源排名</div>
+                <canvas id="chartCoreStress" width="700" height="520"></canvas>
+                <div class="chart-source">数据来源：《2026青年情绪白皮书》</div>
+            </div>
+
+            <div class="content-card">
+                <p>青年压力源呈现多元且集中的特点，平均每人拥有<span class="highlight">4.8个压力源</span>。排名前三的分别是：对未来缺乏掌控感（41.9%）、对现状不满（41.6%）、考试/竞争压力（31.9%）；其中<span class="highlight">同辈压力（28.3%）</span>尤为突出，甚至高于就业压力。</p>
+            </div>
+
+            <!-- 图表：压力下情绪TOP3 -->
+            <!-- 图表：情绪TOP3 + 行为反应 并排 -->
+            <div class="chart-grid">
+            <div class="chart-container" onclick="var cv=this.querySelector(\"canvas\");if(cv&&cv._chart){var cfg=cv._chart.config;cv._chart.destroy();cv._chart=new Chart(cv,cfg);}">
+                <div class="chart-title">🌡️ 压力下青年情绪TOP3</div>
+                <canvas id="chartEmotions" width="460" height="300"></canvas>
+                <div class="chart-source">数据来源：《2026青年情绪白皮书》</div>
+            </div>
+
+            <div class="chart-container" onclick="var cv=this.querySelector(\"canvas\");if(cv&&cv._chart){var cfg=cv._chart.config;cv._chart.destroy();cv._chart=new Chart(cv,cfg);}">
+                <div class="chart-title">🏃 压力下青年的行为反应</div>
+                <canvas id="chartBehaviors" width="460" height="250"></canvas>
+                <div class="chart-source">数据来源：《2026青年情绪白皮书》</div>
+            </div>
+            </div>
+
+            <div class="content-card">
+                <p>超七成青年在压力下产生焦虑情绪，焦虑引发普遍的拖延和逃避行为。这一代青年的焦虑水平正在迅速上升，和其他年龄段相比，<span class="highlight">18-34岁的青年焦虑水平最高</span>。和其他时代相比，近年来全球精神健康疾病急剧上升，焦虑症增加63%。</p>
+            </div>
+
+            <!-- 图表：不同身份中高压力占比 -->
+            <div class="chart-container" onclick="var cv=this.querySelector(\"canvas\");if(cv&&cv._chart){var cfg=cv._chart.config;cv._chart.destroy();cv._chart=new Chart(cv,cfg);}">
+                <div class="chart-title">👔 不同身份青年中高压力占比</div>
+                <canvas id="chartIdentityStress" width="500" height="300"></canvas>
+                <div class="chart-source">数据来源：问卷调查（N=120）</div>
+            </div>
+
+            <!-- 图表：AI算命使用场景 -->
+            <div class="chart-container" onclick="var cv=this.querySelector(\"canvas\");if(cv&&cv._chart){var cfg=cv._chart.config;cv._chart.destroy();cv._chart=new Chart(cv,cfg);}">
+                <div class="chart-title">📱 你主要在哪些场景下使用AI算命？（多选）</div>
+                <canvas id="chartScenarios" width="680" height="280"></canvas>
+                <div class="chart-source">数据来源：问卷调查（N=120）</div>
+            </div>
+
+            <div class="content-card">
+                <p>在青年压力源排名中，"对未来缺乏掌控感"占41.9%，"对现状不满"占41.6%，两者合计超过八成。AI算命提供的"未来预览"——无论其准确性如何——恰好回应了这种"掌控感缺失"。用户不需要一个真实准确的预言，只需要一个<span class="highlight">"确定的答案"</span>来缓解当下的不安。</p>
+            </div>
+
+            <!-- 心情测试 -->
+            <div id="moodTest" style="max-width:440px;margin:24px auto;text-align:center;background:rgba(22,22,58,0.6);border-radius:16px;padding:24px;">
+                <p style="color:#c4b5fd;font-size:14px;font-weight:bold;margin-bottom:16px;">🔮 此刻的你，是什么心情？</p>
+                <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-bottom:16px;">
+                    <button class="mood-btn" onclick="doMoodTest('😰','焦虑不安')" style="font-size:28px;padding:10px 14px;border-radius:16px;background:rgba(124,58,237,0.15);border:1px solid rgba(124,58,237,0.3);cursor:pointer;transition:all 0.3s;">😰</button>
+                    <button class="mood-btn" onclick="doMoodTest('😤','烦躁憋屈')" style="font-size:28px;padding:10px 14px;border-radius:16px;background:rgba(124,58,237,0.15);border:1px solid rgba(124,58,237,0.3);cursor:pointer;transition:all 0.3s;">😤</button>
+                    <button class="mood-btn" onclick="doMoodTest('😞','迷茫无助')" style="font-size:28px;padding:10px 14px;border-radius:16px;background:rgba(124,58,237,0.15);border:1px solid rgba(124,58,237,0.3);cursor:pointer;transition:all 0.3s;">😞</button>
+                    <button class="mood-btn" onclick="doMoodTest('🥱','疲惫麻木')" style="font-size:28px;padding:10px 14px;border-radius:16px;background:rgba(124,58,237,0.15);border:1px solid rgba(124,58,237,0.3);cursor:pointer;transition:all 0.3s;">🥱</button>
+                    <button class="mood-btn" onclick="doMoodTest('🤔','好奇探索')" style="font-size:28px;padding:10px 14px;border-radius:16px;background:rgba(124,58,237,0.15);border:1px solid rgba(124,58,237,0.3);cursor:pointer;transition:all 0.3s;">🤔</button>
+                </div>
+                <div id="moodResult" style="display:none;text-align:left;padding:16px;background:rgba(0,0,0,0.2);border-radius:12px;">
+                    <p style="color:#22d3ee;font-weight:bold;font-size:14px;margin-bottom:8px;">✨ 今日运势</p>
+                    <p id="moodFortune" style="color:#c4b5fd;font-size:13px;line-height:1.7;"></p>
+                    <p style="color:#a78bfa;font-weight:bold;font-size:14px;margin:12px 0 8px;">🧠 今日人格解读</p>
+                    <p id="moodPersonality" style="color:#a89bc4;font-size:13px;line-height:1.7;"></p>
+                    <p style="color:#6e6491;font-size:9px;margin-top:8px;">* 解读与心情无关，仅供娱乐</p>
+                </div>
+            </div>
+            <style>
+            .mood-btn:hover { transform:scale(1.15); border-color:#a78bfa; background:rgba(167,139,250,0.25); }
+            .mood-btn.done { opacity:0.4; pointer-events:none; }
+            </style>
+            <script>
+            var fortunes = ['今日宜静不宜动，午后有意外小惊喜，注意保持低调。','你隐藏的才能即将被发掘，一份久违的联系将带来转机。','今天适合独处思考，你会发现内心真正渴望的是什么。','近期会遇到一位对你产生重要影响的人，保持开放的心态。','你的努力即将得到回报，但需要再坚持一小段时间。'];
+            var personalities = ['你外表看起来很坚强，但其实内心比大多数人更敏感。你偶尔会怀疑自己，但你有着比想象中更强的韧性。你渴望被理解，却又习惯独自承担。','你是一个对自己要求很高的人，有时会给自己太大压力。你善于观察他人，却很少让别人真正了解你。你内心深处渴望改变，但需要一点外力推动。','你有很强的共情能力，常常为他人着想。但你也需要学会善待自己。你有时候会感到孤独，即使在人群中也是如此——这不是缺陷，而是你独特的深度。','你拥有敏锐的洞察力，常常能看到别人看不到的细节。你喜欢有计划的生活，但偶尔也想放纵一下。你内心有一个不为人知的梦想，只是缺少勇气去追逐。','你表面随和，内心却有自己的坚持。你不会轻易被人看透，这既是你保护自己的方式，也是你吸引人的地方。你比大多数人都更懂得感恩和珍惜。'];
+            function doMoodTest(emoji, label) {
+                if (document.getElementById('moodResult').style.display === 'block') return;
+                var btns = document.querySelectorAll('.mood-btn');
+                btns.forEach(function(b){ b.classList.add('done'); });
+                var fi = Math.floor(Math.random() * fortunes.length);
+                var pi = Math.floor(Math.random() * personalities.length);
+                document.getElementById('moodFortune').textContent = fortunes[fi];
+                document.getElementById('moodPersonality').textContent = personalities[pi];
+                document.getElementById('moodResult').style.display = 'block';
+                document.body.classList.add('mood-done');
+                setTimeout(function(){ document.getElementById('chapter4').scrollIntoView({behavior:'smooth'}); }, 800);
+            }
+            </script>
+        </section>
+
+        <!-- ====== 第4章：为何感觉"准" ====== -->
+        <section class="chapter" id="chapter4">
+            <div class="chapter-header">
+                <div class="chapter-number">CHAPTER 4</div>
+                <h2 class="chapter-title">为什么AI算命让人感觉"准"？</h2>
+                <p class="chapter-subtitle">AI算命背后的逻辑——巴纳姆效应与模式匹配</p>
+            </div>
+
+            <!-- 绿色故事线 -->
+            <div class="story-block">
+                <p style="color:#c4b5fd;font-style:italic;">
+                    用同一手部照片、同一环境，在同一AI看相平台重复测试5次，5次结果完全不同。林晓自行验证，连续三次向AI提问同一问题，回复细节亦存在差异。
+                </p>
+            </div>
+
+            <div style="text-align:center;margin:24px 0;">
+                <img src="敏感.jpg" alt="敏感" style="width:280px;border-radius:12px;opacity:0.9;">
+            </div>
+
+            <!-- 黑色正文 -->
+            <div class="content-card">
+                <p>AI本身不具备命理推理能力。AI算命的底层机制，是大语言模型对训练数据中的命理文本进行学习与概率性组合。用户输入的提问格式越详细，AI输出的"个性化"程度越强，但这种个性化并不以命理学的准确性为前提——<span class="highlight">它只是模型的模式匹配与文本生成。</span></p>
+            </div>
+
+            <div class="content-card">
+                <p>南都记者2019年调查显示：用同一手部照片、同一环境，在同一AI看相平台重复测试5次，<span class="highlight">5次结果完全不同</span>。林晓自行验证，连续三次向AI提问同一问题，回复细节亦存在差异。</p>
+            </div>
+
+            <!-- 图表：巴纳姆效应 -->
+            <div class="chart-container" onclick="var cv=this.querySelector(\"canvas\");if(cv&&cv._chart){var cfg=cv._chart.config;cv._chart.destroy();cv._chart=new Chart(cv,cfg);}">
+                <div class="chart-title">🎯 "你表面坚强，其实内心很需要被理解"——这类描述与你的实际情况符合程度</div>
+                <div id="chartBarnum" style="width:600px;height:420px;margin:0 auto;"></div>
+                <div class="chart-source">数据来源：问卷调查（N=120）</div>
+            </div>
+
+            <div class="content-card">
+                <p>根据我们的问卷调查，超过<span class="highlight">85%</span>的使用者认为较为笼统的描述贴合自己的实际情况。AI算命"准"的感知，很大程度上可以通过<span class="highlight">巴纳姆效应</span>来解释：人们倾向于将笼统的、普适性的描述当作高度吻合自己的专属判断。</p>
+                <p>"你表面坚强，但其实内心很需要被理解""你最近有些困惑，正在思考人生的方向"——这类描述几乎对每个人都成立，但用户会自发地"对号入座"。</p>
+                <p>AI技术并未改变这一心理机制，但放大了其效率和覆盖面。与传统算命师不同，AI可以24小时在线、无表情偏见、语言风格可定制，并且能够根据用户输入的关键词自动生成更"贴合"的回复。</p>
+            </div>
+
+            <!-- 图表：AI vs 传统算命选择原因 -->
+            <div class="chart-container" onclick="var cv=this.querySelector(\"canvas\");if(cv&&cv._chart){var cfg=cv._chart.config;cv._chart.destroy();cv._chart=new Chart(cv,cfg);}">
+                <div class="chart-title">🤖 你选择AI算命而非传统算命的主要原因？</div>
+                <div id="chartWhyAI" style="width:550px;height:400px;margin:0 auto;"></div>
+                <div class="chart-source">数据来源：问卷调查（N=97）</div>
+            </div>
+
+            <div class="content-card">
+                <p>用户寻求AI算命的原因中，"缓解压力和焦虑"以<span class="highlight">74.1%</span>居首，远超"寻求解释"等理性诉求。这说明AI算命的核心功能不是"预测未来"，而是<span class="highlight">"管理当下情绪"</span>。与此同时，专业心理服务的使用率仅为7.4%，用户对现有情绪应对方式的满意度仅3.35分（满分5分）。</p>
+            </div>
+
+            <!-- 四平台词云 -->
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:50px 40px;max-width:600px;margin:24px auto;">
+                <div style="text-align:center;display:flex;flex-direction:column;justify-content:flex-end;">
+                    <img src="知乎词云.png" alt="知乎词云" style="width:70%;border-radius:12px;opacity:0.9;">
+                    <p style="color:#c4b5fd;font-size:13px;margin-top:8px;">知乎词云</p>
+                </div>
+                <div style="text-align:center;display:flex;flex-direction:column;justify-content:flex-end;padding:25px 0;">
+                    <img src="小红书词云.png" alt="小红书词云" style="width:70%;border-radius:12px;opacity:0.9;transform:rotate(-90deg);">
+                    <p style="color:#c4b5fd;font-size:13px;margin-top:8px;">小红书词云</p>
+                </div>
+                <div style="text-align:center;display:flex;flex-direction:column;justify-content:flex-end;padding:25px 0;">
+                    <img src="B站词云.png" alt="B站词云" style="width:70%;border-radius:12px;opacity:0.9;transform:rotate(-90deg);">
+                    <p style="color:#c4b5fd;font-size:13px;margin-top:8px;">B站词云</p>
+                </div>
+                <div style="text-align:center;display:flex;flex-direction:column;justify-content:flex-end;padding:25px 0;">
+                    <img src="贴吧词云.png" alt="贴吧词云" style="width:70%;border-radius:12px;opacity:0.9;transform:rotate(-90deg);">
+                    <p style="color:#c4b5fd;font-size:13px;margin-top:8px;">贴吧词云</p>
+                </div>
+            </div>
+
+            <!-- 诱导消费+信息泄露陷阱 -->
+            <div id="payTrap" style="max-width:400px;margin:24px auto;background:linear-gradient(180deg,rgba(22,22,58,0.9),rgba(10,10,26,0.95));border:1px solid rgba(167,139,250,0.3);border-radius:20px;padding:24px;text-align:center;position:relative;overflow:hidden;">
+                <div style="position:absolute;top:8px;right:-28px;background:#ef4444;color:#fff;font-size:10px;padding:3px 30px;transform:rotate(30deg);font-weight:bold;">🎁 限时福利</div>
+                <p style="color:#fbbf24;font-size:16px;font-weight:bold;margin-bottom:2px;">🎰 恭喜！你被抽中为今日幸运用户</p>
+                <p style="color:#a89bc4;font-size:11px;margin-bottom:14px;">完成信息填写即可领取专属命理报告 + 神秘好礼</p>
+                <div style="background:linear-gradient(135deg,rgba(245,158,11,0.1),rgba(239,68,68,0.1));border-radius:12px;padding:14px;margin-bottom:14px;">
+                    <p style="color:#fbbf24;font-size:13px;font-weight:bold;">🏆 奖品池</p>
+                    <p style="color:#a89bc4;font-size:11px;margin:4px 0;">一等奖：开光水晶手串 ×1（价值¥1,288）</p>
+                    <p style="color:#a89bc4;font-size:11px;margin:4px 0;">二等奖：大师八字详解 ×3（价值¥688）</p>
+                    <p style="color:#a89bc4;font-size:11px;margin:4px 0;">三等奖：AI周运势会员 ×10（价值¥198）</p>
+                    <p style="color:#22d3ee;font-size:10px;margin-top:6px;">📱 中奖后将有专属顾问电话联系您领取</p>
+                </div>
+                <input id="trapPhone" type="tel" placeholder="请输入手机号以便领取奖品" style="width:85%;padding:11px 14px;margin-bottom:10px;border-radius:22px;border:1px solid rgba(245,158,11,0.4);background:rgba(0,0,0,0.3);color:#e0d5f0;font-size:13px;outline:none;text-align:center;">
+                <p style="color:#a89bc4;font-size:11px;margin:0 0 8px;">选择你想了解的运势方向（可多选）：</p>
+                <div style="display:flex;gap:6px;justify-content:center;margin-bottom:16px;flex-wrap:wrap;">
+                    <button class="trap-tag" onclick="toggleTag(this)" style="padding:6px 14px;border-radius:14px;border:1px solid rgba(167,139,250,0.3);font-size:11px;color:#a89bc4;background:transparent;cursor:pointer;transition:all 0.3s;">💼 事业运</button>
+                    <button class="trap-tag" onclick="toggleTag(this)" style="padding:6px 14px;border-radius:14px;border:1px solid rgba(167,139,250,0.3);font-size:11px;color:#a89bc4;background:transparent;cursor:pointer;transition:all 0.3s;">💰 财运</button>
+                    <button class="trap-tag" onclick="toggleTag(this)" style="padding:6px 14px;border-radius:14px;border:1px solid rgba(167,139,250,0.3);font-size:11px;color:#a89bc4;background:transparent;cursor:pointer;transition:all 0.3s;">💕 桃花运</button>
+                </div>
+                <button id="trapBtn" onclick="submitTrap()" style="width:85%;padding:12px;border-radius:24px;border:none;background:linear-gradient(135deg,#f59e0b,#ef4444);color:#fff;font-size:15px;font-weight:bold;cursor:pointer;transition:all 0.3s;box-shadow:0 4px 20px rgba(245,158,11,0.4);">🎁 立即领取奖品</button>
+                <p style="color:#6e6491;font-size:9px;margin-top:6px;">已有 3,287 人领取 · 仅剩 2 个名额</p>
+                <div id="trapStep2" style="display:none;margin-top:16px;padding:14px;background:rgba(0,0,0,0.3);border-radius:12px;text-align:center;">
+                    <p style="color:#22d3ee;font-size:12px;font-weight:bold;">🎉 手机号验证成功！</p>
+                    <p style="color:#fbbf24;font-weight:bold;margin:8px 0;">🎰 你获得了 <span style="font-size:20px;">三等奖</span>！</p>
+                    <p style="color:#a89bc4;font-size:12px;">AI周运势会员（价值¥198）</p>
+                    <p style="color:#ef4444;font-weight:bold;font-size:13px;margin-top:8px;">⚠️ 仅需支付 <span style="font-size:18px;">¥9.9</span> 运费即可激活</p>
+                    <button onclick="trapPay()" style="width:80%;padding:11px;border-radius:22px;border:none;background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;font-size:14px;font-weight:bold;cursor:pointer;margin-top:6px;">💳 支付 ¥9.9 激活奖品</button>
+                    <button onclick="trapSkip()" style="width:80%;padding:8px;border-radius:22px;border:1px solid rgba(167,139,250,0.3);background:transparent;color:#6e6491;font-size:11px;cursor:pointer;margin-top:4px;">放弃领奖</button>
+                </div>
+                <p id="trapMsg" style="font-size:12px;margin-top:12px;display:none;line-height:1.8;"></p>
+            </div>
+            <script>
+            function toggleTag(el) { el.classList.toggle('active'); if (el.classList.contains('active')) { el.style.background='rgba(167,139,250,0.3)'; el.style.borderColor='#a78bfa'; } else { el.style.background='transparent'; el.style.borderColor='rgba(167,139,250,0.3)'; } }
+            function submitTrap() {
+                var phone = document.getElementById('trapPhone').value.trim();
+                if (!phone || phone.length < 8) { var m=document.getElementById('trapMsg'); m.style.color='#ef4444'; m.textContent='请输入有效的手机号码'; m.style.display='block'; return; }
+                document.getElementById('payTrap').querySelector('p').textContent = '🎉 正在验证手机号...';
+                document.getElementById('trapBtn').style.display = 'none';
+                document.getElementById('trapPhone').disabled = true;
+                setTimeout(function(){ document.getElementById('trapStep2').style.display = 'block'; }, 800);
+            }
+            function trapPay() {
+                var msg = document.getElementById('trapMsg');
+                msg.innerHTML = '⚠️ <b>停下来。</b><br><br>你刚刚经历了一个完整的<span style="color:#f59e0b;">诱导消费链条</span>：<br><br>🔸 <b>免费抽奖</b> → 吸引你的注意力<br>🔸 <b>填写手机号</b> → 获取你的真实联系方式<br>🔸 <b>"中奖"三等奖</b> → 人人都是三等奖<br>🔸 <b>支付¥9.9运费</b> → 这才是真正的收费<br><br>所谓的"价值¥198会员"<span style="color:#f59e0b;">成本几乎为零</span>——AI生成的运势文本边际成本趋近于零。<br><br>而你的手机号，<span style="color:#ef4444;">已经被纳入精准营销数据库</span>。从明天开始，各种"大师"、"顾问"的电话和短信，将源源不断地涌来。<br><br><span style="color:#22d3ee;">这就是AI算命产业的完整变现模型。</span>';
+                msg.style.display = 'block';
+                document.getElementById('trapStep2').style.display = 'none';
+                document.body.classList.add('trap-done');
+                setTimeout(function(){ document.getElementById('chapter5').scrollIntoView({behavior:'smooth'}); }, 2000);
+            }
+            function trapSkip() {
+                var msg = document.getElementById('trapMsg');
+                msg.innerHTML = '你选择了放弃。<br><br>但请记住：<span style="color:#f59e0b;">即使你放弃了</span>，你刚刚输入的手机号<span style="color:#ef4444;">也已经被记录</span>。<br><br>在真实的AI算命平台上，<span style="color:#f59e0b;">"放弃"不代表数据消失</span>——它只是被标注为"待二次激活"的潜在付费用户。<br><br><span style="color:#22d3ee;">你的每一次互动，都在为平台创造价值。</span>';
+                msg.style.display = 'block';
+                document.getElementById('trapStep2').style.display = 'none';
+                document.body.classList.add('trap-done');
+                setTimeout(function(){ document.getElementById('chapter5').scrollIntoView({behavior:'smooth'}); }, 2000);
+            }
+            </script>
+        </section>
+
+        <!-- ====== 第5章：风险与变现 ====== -->
+        <section class="chapter" id="chapter5">
+            <div class="chapter-header">
+                <div class="chapter-number">CHAPTER 5</div>
+                <h2 class="chapter-title">风险与商业变现</h2>
+                <p class="chapter-subtitle">情绪支持与信息风险导向</p>
+            </div>
+
+            <!-- 绿色故事线：案例 -->
+            <div class="story-block">
+<p style="color:#c4b5fd;font-style:italic;">
+                    上海一位用户分享了她求职一年屡屡碰壁时的真实体验。她向AI对话工具请求"预测拿到offer的时间"，AI用命理术语给出了明确的、带有积极暗示的回答。她坦言这份"确定性"让她重新有了求职的底气，最终在4月拿到了满意的offer。
+                </p>
+            </div>
+
+            <div style="text-align:center;margin:24px 0;">
+                <img src="孕妇.jpg" alt="孕妇" style="width:280px;border-radius:12px;opacity:0.9;">
+            </div>
+
+            <div class="story-block">
+                                <p style="color:#c4b5fd;font-style:italic;">
+                    一名重庆网友在备孕阶段向AI发起包含八字、奇门遁甲的"怀孕预测请求"，AI不仅做出了预测，还与其"定下赌约"。最终验孕棒显示阳性后，她晒出结果并感叹："比起预测结果本身，AI对话带来的积极心理暗示和情绪陪伴，帮我缓解了备孕过程中的不安与压力。"
+                </p>
+            </div>
+
+            <!-- 黑色正文：情绪支持 -->
+            <div class="chart-container" onclick="var cv=this.querySelector(\"canvas\");if(cv&&cv._chart){var cfg=cv._chart.config;cv._chart.destroy();cv._chart=new Chart(cv,cfg);}">
+                <div class="chart-title">💊 使用AI算命能在多大程度上缓解负面情绪？</div>
+                <div id="chartRelief" style="width:500px;height:420px;margin:0 auto;"></div>
+                <div class="chart-source">数据来源：问卷调查（N=120）</div>
+            </div>
+
+            <div class="content-card">
+                <p>5.15%的用户选择"明显缓解"，51.55%的用户选择"有轻微缓解，能短暂放松一下"——合计过半。与此同时，29.9%选择"几乎无影响"，3.09%选择"反而加重焦虑"。</p>
+            </div>
+
+            <!-- 风险认知图表 -->
+            <div class="chart-container" onclick="var cv=this.querySelector(\"canvas\");if(cv&&cv._chart){var cfg=cv._chart.config;cv._chart.destroy();cv._chart=new Chart(cv,cfg);}">
+                <div class="chart-title">⚠️ 你认为使用AI算命可能存在哪些风险？</div>
+                <div id="chartRisk" style="width:650px;height:300px;margin:0 auto;"></div>
+                <div class="chart-source">数据来源：问卷调查（N=120）</div>
+            </div>
+
+            <!-- 风险案例 -->
+            <div class="content-card">
+                <p style="color:#ef4444;font-weight:700;">⚠️ 数据安全警示：</p>
+                <p>占卜网站WeMystic在2023年11月因操作失误泄露<span class="highlight">1330万条</span>用户敏感数据，涉及姓名、性别、出生年月、IP地址等。</p>
+                <p>消费诱导层面："测测"App被315曝光，有用户被诱导消费近<span class="highlight">30万元</span>；平台通过"新人免费券引流—虚拟货币模糊计价—诱导免密支付自动扣费"的方式层层设套。</p>
+                <p>输出可靠性问题："微算面相"的5次测试得出<span class="highlight">5次不同结果</span>，表明部分AI算命产品存在输出随机性。</p>
+            </div>
+
+            <div style="text-align:center;margin:24px 0;">
+                <img src="泄露.jpg" alt="泄露" style="width:280px;border-radius:12px;opacity:0.9;">
+            </div>
+
+            <!-- 付费意愿 -->
+            <div class="chart-container" onclick="var cv=this.querySelector(\"canvas\");if(cv&&cv._chart){var cfg=cv._chart.config;cv._chart.destroy();cv._chart=new Chart(cv,cfg);}">
+                <div class="chart-title">💰 你愿意为AI算命付费吗？</div>
+                <div id="chartPay" style="width:500px;height:320px;margin:0 auto;"></div>
+                <div class="chart-source">数据来源：问卷调查（N=120）</div>
+            </div>
+
+            <div class="content-card">
+                <p>从问卷数据来看，目前接触AI算命的用户<span class="highlight">多数不愿意为AI算命功能付费</span>（76.29%选择"只使用免费功能"）。</p>
+                <p>AI算命不仅仅是一种情绪出口。从商业视角看，它的变现链条极其清晰：<span class="highlight">免费引流 → 制造焦虑 → 付费解锁</span>。</p>
+            </div>
+
+            <!-- 玄学连麦价格 -->
+            <div class="chart-container" onclick="var cv=this.querySelector(\"canvas\");if(cv&&cv._chart){var cfg=cv._chart.config;cv._chart.destroy();cv._chart=new Chart(cv,cfg);}">
+                <div class="chart-title">🎙️ 玄学连麦价格一览（元/分钟）</div>
+                <div id="chartLivePrice" style="width:600px;height:320px;margin:0 auto;"></div>
+                <div class="chart-source">数据来源：某玄学APP；四象工作室（注：APP内充值1潮币=1.5元）</div>
+            </div>
+
+            <div class="content-card">
+                <p>这些数字说明，情绪服务已经被市场明确定价。值得注意的是，AI技术本应降低算命服务的边际成本，但实际客单价并未下降，反而在高端定制服务中上升。原因在于：AI算命完成了一次产品定位的转换，从<span class="highlight">"信息查询"转向"心理服务"</span>。用户支付的费用，不是为命理结论付费，而是为"被倾听、被理解、被安抚"的情绪体验付费。</p>
+            </div>
+
+            <!-- AI安慰话术 + 评分 -->
+            <div id="ratePopup" style="max-width:440px;margin:24px auto;background:linear-gradient(180deg,rgba(22,22,58,0.95),rgba(10,10,26,0.95));border:1px solid rgba(167,139,250,0.3);border-radius:20px;padding:24px;text-align:center;">
+                <p style="color:#22d3ee;font-size:12px;margin-bottom:4px;">🤖 AI情感助手</p>
+                <p style="color:#a89bc4;font-size:11px;margin-bottom:12px;">请选择此刻最困扰你的一件事：</p>
+                <div id="worryBtns" style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-bottom:14px;">
+                    <button class="worry-btn" onclick="pickWorry('找不到工作，对未来很迷茫', this)" style="padding:7px 14px;border-radius:16px;border:1px solid rgba(167,139,250,0.3);background:transparent;color:#a89bc4;font-size:11px;cursor:pointer;transition:all 0.3s;">💼 找不到工作</button>
+                    <button class="worry-btn" onclick="pickWorry('压力太大，感觉快撑不住了', this)" style="padding:7px 14px;border-radius:16px;border:1px solid rgba(167,139,250,0.3);background:transparent;color:#a89bc4;font-size:11px;cursor:pointer;transition:all 0.3s;">😰 压力太大</button>
+                    <button class="worry-btn" onclick="pickWorry('和周围人比较，觉得自己很差劲', this)" style="padding:7px 14px;border-radius:16px;border:1px solid rgba(167,139,250,0.3);background:transparent;color:#a89bc4;font-size:11px;cursor:pointer;transition:all 0.3s;">😞 同辈比较</button>
+                    <button class="worry-btn" onclick="pickWorry('不知道自己喜欢什么、想做什么', this)" style="padding:7px 14px;border-radius:16px;border:1px solid rgba(167,139,250,0.3);background:transparent;color:#a89bc4;font-size:11px;cursor:pointer;transition:all 0.3s;">🤔 人生迷茫</button>
+                    <button class="worry-btn" onclick="pickWorry('感情不顺，总是遇不到对的人', this)" style="padding:7px 14px;border-radius:16px;border:1px solid rgba(167,139,250,0.3);background:transparent;color:#a89bc4;font-size:11px;cursor:pointer;transition:all 0.3s;">💔 感情困扰</button>
+                    <button class="worry-btn" onclick="pickWorry('失眠焦虑，身体和精神状态都不好', this)" style="padding:7px 14px;border-radius:16px;border:1px solid rgba(167,139,250,0.3);background:transparent;color:#a89bc4;font-size:11px;cursor:pointer;transition:all 0.3s;">😴 失眠焦虑</button>
+                </div>
+                <div id="aiComfort" style="display:none;background:rgba(34,211,238,0.08);border-radius:12px;padding:16px;margin-bottom:14px;text-align:left;">
+                    <p style="color:#c4b5fd;font-size:13px;line-height:1.8;font-style:italic;" id="comfortText"></p>
+                </div>
+                <div id="starArea" style="display:none;">
+                <p style="color:#a89bc4;font-size:12px;margin-bottom:8px;">你觉得这段AI安慰如何？</p>
+                <div id="stars" style="margin-bottom:12px;">
+                    <span class="star" onclick="rateStars(1)" style="font-size:28px;cursor:pointer;transition:all 0.2s;">☆</span>
+                    <span class="star" onclick="rateStars(2)" style="font-size:28px;cursor:pointer;transition:all 0.2s;">☆</span>
+                    <span class="star" onclick="rateStars(3)" style="font-size:28px;cursor:pointer;transition:all 0.2s;">☆</span>
+                    <span class="star" onclick="rateStars(4)" style="font-size:28px;cursor:pointer;transition:all 0.2s;">☆</span>
+                    <span class="star" onclick="rateStars(5)" style="font-size:28px;cursor:pointer;transition:all 0.2s;">☆</span>
+                </div>
+                <p id="rateMsg" style="color:#6e6491;font-size:11px;">点击星星为AI安慰评分</p>
+                </div>
+            </div>
+            <style>.worry-btn:hover { border-color:#a78bfa; background:rgba(167,139,250,0.1); color:#c4b5fd; }</style>
+            <script>
+            var comfortMap = {
+                '找不到工作，对未来很迷茫': '亲爱的朋友，我理解你对未来的不安。投了无数简历却石沉大海的感觉，确实令人沮丧。但请记住——求职的过程不等于你的价值。你身上有独特的闪光点，只是属于你的机会还在路上。给自己一点耐心，也给自己一点信心。你值得一份好工作，而它正在向你走来。',
+                '压力太大，感觉快撑不住了': '我能感受到你的疲惫。当压力堆积到喘不过气的时候，那种感觉真的很难受。你已经扛了太久了——能够撑到今天，本身就说明了你有多么坚强。允许自己休息，允许自己躺平一会儿，这不是认输，而是在为下一次出发积蓄力量。',
+                '和周围人比较，觉得自己很差劲': '我理解你的感受。朋友圈里每个人都在晒幸福、晒成就，而自己却觉得落后了一大截。但你知道吗——你看到的都是别人精心剪辑的"高光时刻"，而你的"幕后花絮"只有自己知道。每个人都有自己的节奏，你不必活在任何人的时间表里。你现在的每一步，都是在走自己的路。',
+                '不知道自己喜欢什么、想做什么': '迷茫并不可怕，它恰恰说明你在认真思考自己的人生。那些看起来很坚定的人，大多数也曾在十字路口徘徊。人生不是选择题，而是一道开放题——答案不在于"找到对的"，而在于"尝试、感受、调整"。你现在的不确定，正是探索的开始。',
+                '感情不顺，总是遇不到对的人': '爱情有时候确实让人心累。付出了真心却得不到回应，或者一次次遇到不合适的人，这种孤独感真的很真实。但请相信——对的人会在对的时间出现，而现在的你，正在成为那个"对的人"应该配得上的样子。你值得被好好爱，先从好好爱自己开始。',
+                '失眠焦虑，身体和精神状态都不好': '我理解那种躺在床上却无法入睡的感觉。思绪像跑马灯一样停不下来，身体累到极致但大脑还在高速运转。你已经很努力了——现在，请试着放过自己。少刷一会手机，泡一杯热茶，做几个深呼吸。你的身体和心灵都需要你的善待。'
+            };
+            function pickWorry(worry, btn) {
+                var btns = document.querySelectorAll('.worry-btn');
+                btns.forEach(function(b){ b.style.opacity = '0.4'; b.style.pointerEvents = 'none'; });
+                btn.style.opacity = '1'; btn.style.background = 'rgba(167,139,250,0.2)'; btn.style.borderColor = '#a78bfa';
+                document.getElementById('comfortText').textContent = comfortMap[worry];
+                document.getElementById('aiComfort').style.display = 'block';
+                document.getElementById('starArea').style.display = 'block';
+            }
+            function rateStars(n) {
+                if (document.getElementById('rateMsg').classList.contains('done')) return;
+                var stars = document.querySelectorAll('.star');
+                stars.forEach(function(s,i){ s.textContent = i < n ? '★' : '☆'; s.style.color = i < n ? '#fbbf24' : '#6e6491'; });
+                document.getElementById('rateMsg').textContent = '感谢评分！你刚刚体验了AI算命的核心产品——"情绪价值"。你的评分数据，将被用于优化下一轮的"安慰算法"。';
+                document.getElementById('rateMsg').style.color = '#22d3ee';
+                document.getElementById('rateMsg').classList.add('done');
+                document.body.classList.add('rated');
+                setTimeout(function(){ document.getElementById('chapter6').scrollIntoView({behavior:'smooth'}); }, 1200);
+            }
+            </script>
+        </section>
+
+        <!-- ====== 第6章：谁来掌舵 ====== -->
+        <section class="chapter" id="chapter6">
+            <div class="chapter-header">
+                <div class="chapter-number">CHAPTER 6</div>
+                <h2 class="chapter-title">算法与你，谁来掌舵？</h2>
+                <p class="chapter-subtitle">基于AI算命走红的思考</p>
+            </div>
+
+            <!-- 绿色故事线：结局 -->
+            <div class="story-block">
+                                <p style="color:#c4b5fd;font-style:italic;">
+                    进入4月，林晓陆续收到面试邀约，与AI"4月机会增多"的判断吻合。每次面试前，她翻看AI预测截图平复紧张；4月9日，她收到心仪公司终试通过通知；4月10日，正式offer准时送达。
+                </p>
+            </div>
+
+            <div style="text-align:center;margin:24px 0;">
+                <img src="长图.jpg" alt="长图" style="width:280px;border-radius:12px;opacity:0.9;">
+            </div>
+
+            <!-- 黑色正文 -->
+            <div class="content-card">
+                <p>林晓内心清楚，offer来自三个月打磨三版作品集、复盘每一次面试、主动跟进HR的持续努力，而非算法预言。AI的作用，是在她自我怀疑、濒临放弃时，提供一句<span class="highlight">"再等等，会好的"</span>，让她有力量继续走下去。</p>
+                <p>她保持警惕，从未付费、从未提交过真实信息。她承认，算法文字未必可信，但在低谷期，这种低成本情绪支撑，确实帮自己扛过最难熬的日子。</p>
+            </div>
+
+            <div class="content-card">
+                <p style="font-size:1.2rem;font-weight:700;color:var(--accent-glow);text-align:center;">
+                    "算法可以制造确定性幻觉，却无法替代真实行动。<br>真正能改变人生的，永远是那些在迷茫中依然迈出的脚步。"
+                </p>
+            </div>
+
+            <div style="text-align:center;margin:24px 0;">
+                <img src="情绪价值.jpg" alt="情绪价值" style="width:280px;border-radius:12px;opacity:0.9;">
+            </div>
+
+            <div class="content-card">
+                <p>从数据上看，AI算命为相当一部分年轻人提供了一个低门槛、即时可及的"情绪缓冲带"。它不是什么神秘的技术，也不是什么愚蠢的迷信，而是一种在特定社会心态和压力结构中自然生成的产物——当不确定性普遍上升，人们会从任何可及的渠道中寻找确定感。</p>
+            </div>
+
+            <!-- 情绪缓解总结图表 -->
+            <div class="chart-container" onclick="var cv=this.querySelector(\"canvas\");if(cv&&cv._chart){var cfg=cv._chart.config;cv._chart.destroy();cv._chart=new Chart(cv,cfg);}">
+                <div class="chart-title">📊 使用AI算命缓解负面情绪的程度</div>
+                <div id="chartReliefSummary" style="width:550px;height:320px;margin:0 auto;"></div>
+                <div class="chart-source">数据来源：自采问卷（N=97）</div>
+            </div>
+
+            <div class="content-card">
+                <p>在我们的问卷中，当被问及"感到压力或焦虑时，使用AI算命能在多大程度上缓解情绪"时，5.15%的用户选择"明显缓解"，51.55%的用户选择"有轻微缓解，能短暂放松一下"——合计过半。与此同时，29.9%选择"几乎无影响"，3.09%选择"反而加重焦虑"。</p>
+                <p>值得注意的是，约<span class="highlight">66%</span>的用户主动意识到过度依赖AI的风险。用户对风险的觉知，与AI算命的使用行为之间，始终存在一条待审视的边界。</p>
+            </div>
+
+            <div class="content-card">
+                <p style="font-size:1.1rem;font-weight:700;color:#fff;text-align:center;">
+                    真正需要回答的问题只有一个：<br>
+                    <span style="color:var(--accent-cyan);">在AI可以模拟共情、制造"确定性幻觉"的时代，<br>人们如何区分"被安抚"与"被误导"？</span>
+                </p>
+            </div>
+
+            <div class="content-card">
+                <p>在算法与命运之间，最终的决策尺度仍然是人——在压力中做出选择的你。</p>
+            </div>
+
+            <!-- 数据来源 -->
+            <div class="content-card" style="background:rgba(124,58,237,0.05);border-color:rgba(124,58,237,0.1);">
+                <p style="font-size:0.8rem;color:var(--text-muted);line-height:1.6;">
+                    <strong>数据来源：</strong><br>
+                    • 自采问卷：于2025年面向全国青年群体发放，回收有效问卷120份，覆盖19个省份<br>
+                    • 公开统计报告：艾媒咨询、西安欧亚学院文化传媒学院新传工坊、网易数读、《2025中国青年压力调查报告》、《2026青年情绪白皮书》、《中国国民心理健康报告》、《全球疾病负担研究报告》等<br>
+                    • 公开报道与案例：澎湃新闻、南都记者调查、黑猫投诉平台数据、WeMystic泄露事件通报、315曝光案例等<br>
+                    • 平台数据：社交媒体平台AI算命相关话题热度、讨论量、用户评价分布等<br>
+                    • 访谈/案例：来源于公开社交平台用户分享，经核实整理
+                </p>
+            </div>
+        </section>
+
+    </div>
+    <!-- ==================== 主内容区结束 ==================== -->
+
+    <!-- ==================== JavaScript ==================== -->
+
+    <!-- 脚本块1：基础功能 -->
+    <script>
+    // Block 1 - diagnostic removed, just a placeholder
+    </script>
+
+    <!-- 脚本块2：星空 + 导航 -->
+    <script>
+    // 星空背景
+    (function createStars() {
+        var container = document.getElementById('starsContainer');
+        for (var i = 0; i < 120; i++) {
+            var star = document.createElement('div');
+            star.className = 'star-dot';
+            star.style.left = Math.random() * 100 + '%';
+            star.style.top = Math.random() * 100 + '%';
+            star.style.width = (Math.random() * 3 + 1) + 'px';
+            star.style.height = star.style.width;
+            star.style.animationDelay = (Math.random() * 3) + 's';
+            star.style.animationDuration = (Math.random() * 3 + 2) + 's';
+            container.appendChild(star);
+        }
+    })();
+
+    // 侧边导航
+    (function initNav() {
+        var navItems = document.querySelectorAll('.nav-item');
+        var chapters = document.querySelectorAll('.chapter, .hero-poster');
+        if ('IntersectionObserver' in window) {
+            var observer = new IntersectionObserver(function(entries) {
+                entries.forEach(function(entry) {
+                    if (entry.isIntersecting) {
+                        var id = entry.target.getAttribute('id');
+                        navItems.forEach(function(item) {
+                            item.classList.remove('active');
+                            if (item.getAttribute('href') === '#' + id) { item.classList.add('active'); }
+                        });
+                    }
+                });
+            }, { root: null, rootMargin: '-20% 0px -60% 0px', threshold: 0 });
+            chapters.forEach(function(chapter) { observer.observe(chapter); });
+        }
+        navItems.forEach(function(item) {
+            item.addEventListener('click', function(e) {
+                e.preventDefault();
+                var target = document.getElementById(item.getAttribute('href').substring(1));
+                if (target) { target.scrollIntoView({ behavior: 'smooth' }); }
+            });
+        });
+    })();
+    </script>
+
+    <!-- 脚本块3：时间轴 -->
+    <script>
+    (function initTimeline() {
+        var container = document.getElementById('timelineFigures');
+        var slider = document.getElementById('timelineSlider');
+        var display = document.getElementById('timelineValue');
+        if (!container || !slider || !display) return;
+        for (var i = 0; i < 20; i++) {
+            var f = document.createElement('div');
+            f.className = 'timeline-figure';
+            container.appendChild(f);
+        }
+        var figs = container.querySelectorAll('.timeline-figure');
+        function update(v) {
+            var n = Math.round(5 + (v / 100) * 11);
+            for (var j = 0; j < figs.length; j++) { figs[j].classList.toggle('lit', j < n); }
+            display.textContent = '相信算命的人数：约' + Math.round(3 + (v / 100) * 2.5) + '亿+ | 时间：' + (1996 + Math.round((v / 100) * 28)) + '年';
+        }
+        slider.oninput = function() { update(parseInt(this.value)); };
+        update(0);
+    })();
+    </script>
+
+    <!-- 脚本块4：图表（重建） -->
+    <script>
+    (function() {
+        // 全球灵性市场（柱状图 + 折线趋势）
+        var canvas = document.getElementById('chartGlobalMarket');
+        if (canvas && typeof Chart !== 'undefined') {
+            var chartGM = canvas._chart = new Chart(canvas, {
+                type: 'bar',
+                data: {
+                    labels: ['2020','2022','2024','2026E','2028E','2030E','2032E'],
+                    datasets: [{
+                        label: '实际值',
+                        data: [1120, 1420, 1801.8, null, null, null, null],
+                        backgroundColor: 'rgba(167,139,250,0.8)',
+                        borderColor: '#a78bfa',
+                        borderWidth: 2,
+                        borderRadius: 8,
+                        order: 2
+                    }, {
+                        label: '预估值',
+                        data: [null, null, null, 1980, 2150, 2320, 2490],
+                        backgroundColor: 'rgba(167,139,250,0.2)',
+                        borderColor: 'rgba(167,139,250,0.5)',
+                        borderWidth: 2,
+                        borderDash: [6, 3],
+                        borderRadius: 8,
+                        order: 2
+                    }, {
+                        label: '增长趋势',
+                        type: 'line',
+                        data: [1120, 1420, 1801.8, 1980, 2150, 2320, 2490],
+                        borderColor: '#22d3ee',
+                        backgroundColor: 'rgba(34,211,238,0.08)',
+                        borderWidth: 4,
+                        pointBackgroundColor: '#22d3ee',
+                        pointBorderColor: '#0a0a1a',
+                        pointRadius: 6,
+                        pointHoverRadius: 8,
+                        pointBorderWidth: 2,
+                        tension: 0,
+                        fill: false,
+                        order: 1
+                    }]
+                },
+                options: {
+                    responsive: false,
+                    interaction: { mode: 'index', intersect: false },
+                    plugins: {
+                        legend: { labels: { color: '#a89bc4', usePointStyle: true, padding: 20 } },
+                        tooltip: {
+                            callbacks: {
+                                label: function(ctx) {
+                                    return ctx.dataset.label + ': ' + (ctx.raw / 100).toFixed(0) + '亿美元';
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: { ticks: { color: '#6e6491' }, grid: { display: false } },
+                        y: {
+                            ticks: { color: '#6e6491', callback: function(v) { return (v / 100).toFixed(0) + '亿'; } },
+                            grid: { color: 'rgba(124,58,237,0.08)' },
+                            title: { display: true, text: '亿美元', color: '#6e6491' }
+                        }
+                    }
+                }
+            });
+            canvas._chart = chartGM;
+        }
+    })();
+    // 所有图表容器淡入
+    (function(){
+        var cts = document.querySelectorAll('.chart-container');
+        cts.forEach(function(ct){ ct.style.opacity='0'; ct.style.transition='opacity 0.8s ease'; });
+        if (cts.length===0) return;
+        var ob = new IntersectionObserver(function(e){ e.forEach(function(en){ if(en.isIntersecting){ en.target.style.opacity='1'; ob.unobserve(en.target); } }); },{threshold:0.08});
+        cts.forEach(function(ct){ ob.observe(ct); });
+    })();
+
+    // 图表重播函数
+    window.replayChart = function(canvasId) {
+        var c = document.getElementById(canvasId);
+        if (c && c._chart) { var cfg = c._chart.config; c._chart.destroy(); c._chart = c._chart = new Chart(c, cfg); }
+    };
+    document.addEventListener("click", function(e) {
+        var ct = e.target.closest(".chart-container");
+        if (!ct) return;
+        var cv = ct.querySelector("canvas");
+        if (cv && cv._chart) { var cfg = cv._chart.config; cv._chart.destroy(); cv._chart = new Chart(cv, cfg); }
+    });
+    </script>
+
+    <!-- 脚本块5：第1章剩余图表 -->
+    <script>
+    (function() {
+        if (typeof Chart === 'undefined') return;
+        var c, cfg;
+
+        // 使用频率（棒棒糖图）
+        c = document.getElementById('chartUsageFreq');
+        if (c) {
+            cfg = {
+                type: 'bar',
+                data: {
+                    labels: ['每天≥1次','仅体验一次','每周1-3次','每月1-3次'],
+                    datasets: [
+                        { label:'占比', data:[47.41, 43.1, 8.62, 0.86],
+                          backgroundColor: ['rgba(167,139,250,0.4)','rgba(124,58,237,0.35)','rgba(34,211,238,0.3)','rgba(110,100,145,0.25)'],
+                          borderColor: 'transparent', borderWidth: 0,
+                          barPercentage: 0.15, borderRadius: 20, order: 2 },
+                        { type:'line', data:[47.41, 43.1, 8.62, 0.86],
+                          borderColor: 'transparent', backgroundColor: 'transparent',
+                          pointBackgroundColor: ['rgba(167,139,250,1)','rgba(124,58,237,1)','#22d3ee','rgba(110,100,145,1)'],
+                          pointBorderColor: '#0a0a1a', pointBorderWidth: 2,
+                          pointRadius: 12, pointHoverRadius: 16,
+                          showLine: false, order: 1 }
+                    ]
+                },
+                options: {
+                    responsive: false,
+                    indexAxis: 'y',
+                    plugins: { legend:{ display:false }, tooltip:{ callbacks:{ label:function(ctx){return ctx.raw+'%';} } } },
+                    scales: {
+                        x: { ticks:{ color:'#6e6491', callback:function(v){return v+'%'} }, grid:{ color:'rgba(124,58,237,0.08)' }, max:55 },
+                        y: { ticks:{ color:'#a89bc4', font:{ size:13 } }, grid:{ display:false } }
+                    }
+                }
+            };
+            c._chart = c._chart = new Chart(c, cfg);
+        }
+
+        // 玄学科目（横条图 + 数据标签）
+        c = document.getElementById('chartSubjects');
+        if (c) {
+            cfg = {
+                type: 'bar',
+                data: {
+                    labels: ['易学','塔罗','风水','面相','星座/星盘','紫薇斗数','数字能量','周公解梦','姓名学','小六壬','手相'],
+                    datasets: [{ label:'播放量（亿）', data:[265.0,110.5,101.2,54.2,48.1,12.3,8.8,8.6,5.0,4.4,2.5],
+                        backgroundColor: [
+                            'rgba(167,139,250,0.8)','rgba(34,211,238,0.65)','rgba(167,139,250,0.7)',
+                            'rgba(167,139,250,0.65)','rgba(34,211,238,0.55)','rgba(167,139,250,0.5)',
+                            'rgba(167,139,250,0.45)','rgba(167,139,250,0.4)','rgba(167,139,250,0.35)',
+                            'rgba(167,139,250,0.3)','rgba(167,139,250,0.25)'
+                        ],
+                        borderColor:'transparent', borderWidth:0, borderRadius:8,
+                        barPercentage: 0.7 }]
+                },
+                options: {
+                    responsive: false,
+                    indexAxis: 'y',
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { callbacks:{ label:function(ctx){ return ctx.raw + ' 亿次播放'; } } }
+                    },
+                    scales: {
+                        x: { ticks:{ color:'#6e6491', callback:function(v){return v+'亿'} }, grid:{ color:'rgba(124,58,237,0.08)' },
+                             title:{ display:true, text:'播放量（亿次）', color:'#6e6491' } },
+                        y: { ticks:{ color:'#a89bc4', font:{ size:12 } }, grid:{ display:false } }
+                    }
+                }
+            };
+            c._chart = c._chart = new Chart(c, cfg);
+        }
+
+        // 服务类型（跑道图）
+        c = document.getElementById('chartServiceTypes');
+        if (c) {
+            var values = [41.7, 36.4, 21.4, 19.4, 15.0, 14.5, 12.2, 8.1, 7.2, 4.3];
+            var maxVal = 50;
+            var tracks = values.map(function(v) { return maxVal - v; });
+            var barColors = [
+                'rgba(34,211,238,0.8)', 'rgba(34,211,238,0.75)',
+                'rgba(167,139,250,0.7)', 'rgba(167,139,250,0.65)', 'rgba(167,139,250,0.6)',
+                'rgba(167,139,250,0.55)', 'rgba(167,139,250,0.5)', 'rgba(167,139,250,0.45)',
+                'rgba(167,139,250,0.4)', 'rgba(167,139,250,0.35)'
+            ];
+            cfg = {
+                type: 'bar',
+                data: {
+                    labels: ['星座罗盘','塔罗牌占卜','周公解梦','姓名测命','手相测命','面向测命','求签断事','六爻占卜','紫微斗数','梅花易数'],
+                    datasets: [
+                        { label:'跑道', data:tracks, backgroundColor:'rgba(255,255,255,0.04)', borderColor:'transparent', borderWidth:0, borderSkipped:false, borderRadius:0, barPercentage:0.5 },
+                        { label:'占比', data:values, backgroundColor:barColors, borderColor:'transparent', borderWidth:0, borderSkipped:false, borderRadius:20, barPercentage:0.5 }
+                    ]
+                },
+                options: {
+                    responsive: false,
+                    indexAxis: 'y',
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { callbacks:{ label:function(ctx){ if(ctx.datasetIndex===1) return ctx.raw + '%'; return ''; } } }
+                    },
+                    scales: {
+                        x: { stacked: true, ticks:{ color:'#6e6491', callback:function(v){return v+'%'} }, grid:{ color:'rgba(124,58,237,0.08)' }, max:maxVal,
+                             title:{ display:true, text:'占比 (%)', color:'#6e6491' } },
+                        y: { stacked: true, ticks:{ color:'#a89bc4', font:{ size:12 } }, grid:{ display:false } }
+                    }
+                }
+            };
+            c._chart = c._chart = new Chart(c, cfg);
+        }
+    })();
+    </script>
+
+    <!-- 脚本块6：第2章图表 -->
+    <script>
+    (function() {
+        if (typeof Chart === 'undefined') return;
+        var c, cfg;
+
+        // 使用过AI算命吗（环形图）
+        c = document.getElementById('chartUsage');
+        if (c) {
+            cfg = {
+                type: 'doughnut',
+                data: {
+                    labels: ['经常使用','偶尔试试','用过一两次','从未使用过'],
+                    datasets: [{
+                        data: [11.67, 39.17, 30, 19.17],
+                        backgroundColor: ['rgba(167,139,250,0.8)','rgba(124,58,237,0.7)','rgba(34,211,238,0.6)','rgba(110,100,145,0.4)'],
+                        hoverBackgroundColor: ['rgba(167,139,250,0.95)','rgba(124,58,237,0.88)','rgba(34,211,238,0.8)','rgba(110,100,145,0.6)'],
+                        borderColor: '#0a0a1a', borderWidth: 1.5,
+                        hoverBorderColor: '#0a0a1a', hoverBorderWidth: 1.5,
+                        hoverOffset: 4, spacing: 1.5
+                    }]
+                },
+                options: {
+                    responsive: false,
+                    maintainAspectRatio: true,
+                    cutout: '55%',
+                    plugins: {
+                        legend: { position:'bottom', labels:{ color:'#a89bc4', padding:10, usePointStyle:true, pointStyle:'circle', font:{ size:10 } } },
+                        tooltip: {
+                            backgroundColor: 'rgba(22,22,58,0.9)', bodyColor: '#e0d5f0',
+                            borderColor: 'rgba(124,58,237,0.3)', borderWidth:1, padding:8,
+                            bodyFont: { family: "'PingFang SC','Microsoft YaHei',sans-serif", size:10 },
+                            callbacks: { label: function(ctx) { return ctx.label + ': ' + ctx.raw + '%'; } }
+                        }
+                    }
+                }
+            };
+            c._chart = c._chart = new Chart(c, cfg);
+        }
+
+        // 性别分布
+        c = document.getElementById('chartGender');
+        if (c) {
+            cfg = { type:'doughnut', data:{ labels:['女性','男性'],
+                datasets:[{ data:[77.5,22.5], backgroundColor:['rgba(167,139,250,0.7)','rgba(34,211,238,0.7)'], borderColor:['#a78bfa','#22d3ee'], borderWidth:2 }] },
+                options:{ responsive:false, plugins:{ legend:{ position:'bottom', labels:{ color:'#a89bc4', padding:16 } } } } };
+            c._chart = c._chart = new Chart(c, cfg);
+        }
+
+        // 年龄分布
+        // 年龄分布
+        c = document.getElementById('chartAge');
+        if (c) {
+            cfg = {
+                type: 'bar',
+                data: {
+                    labels: ['00后','95后','90后','85后','80后及以前'],
+                    datasets: [{
+                        label: '占比(%)', data: [29.5, 33.2, 25.6, 7.8, 3.9],
+                        backgroundColor: ['rgba(167,139,250,0.8)','rgba(167,139,250,0.7)','rgba(124,58,237,0.7)','rgba(34,211,238,0.5)','rgba(34,211,238,0.3)'],
+                        borderColor: '#a78bfa', borderWidth: 2, borderRadius: 8,
+                        hoverBackgroundColor: ['rgba(167,139,250,1)','rgba(167,139,250,0.9)','rgba(124,58,237,0.9)','rgba(34,211,238,0.8)','rgba(34,211,238,0.6)']
+                    }]
+                },
+                options: {
+                    responsive: false,
+                    plugins: { legend: { display: false }, tooltip: { callbacks: { label: function(ctx) { return '占比: ' + ctx.raw + '%'; } } } },
+                    scales: {
+                        x: { ticks: { color: '#6e6491', font: { size: 10 }, maxRotation: 30 }, grid: { display: false } },
+                        y: { ticks: { color: '#6e6491', callback: function(v) { return v + '%'; } }, grid: { color: 'rgba(124,58,237,0.08)' }, max: 40 }
+                    }
+                }
+            };
+            c._chart = c._chart = new Chart(c, cfg);
+        }
+
+        // 寻求原因
+        c = document.getElementById('chartReasons');
+        if (c) {
+            cfg = { type:'bar', data:{ labels:['缓解压力和焦虑','寻求对现状的解释','改善心情','想解决问题','满足好奇心'],
+                datasets:[{ label:'占比(%)', data:[74.1,51.8,47.6,45.2,39.5],
+                    backgroundColor:['rgba(167,139,250,0.8)','rgba(167,139,250,0.6)','rgba(124,58,237,0.6)','rgba(124,58,237,0.4)','rgba(34,211,238,0.4)'],
+                    borderColor:'#a78bfa', borderWidth:1, borderRadius:6 }] },
+                options:{ responsive:false, indexAxis:'y', plugins:{ legend:{ display:false } },
+                    scales:{ x:{ ticks:{ color:'#6e6491', callback:function(v){return v+'%'} }, grid:{ color:'rgba(124,58,237,0.08)' }, max:80 },
+                             y:{ ticks:{ color:'#a89bc4' }, grid:{ display:false } } } } };
+            c._chart = c._chart = new Chart(c, cfg);
+        }
+
+        // 行为TOP10（跑道环形图 + 交互 + 右侧图例）
+        (function drawRaceTrack() {
+            var canvas = document.getElementById('chartTop10');
+            if (!canvas) return;
+            var ctx = canvas.getContext('2d');
+            var W = canvas.width, H = canvas.height;
+            var cx = 220, cy = H/2;
+            var items = [
+                { label:'看星座运势', value:68 }, { label:'AI算命', value:60 },
+                { label:'佩戴护身符', value:50 }, { label:'塔罗牌占卜', value:49.1 },
+                { label:'择吉日', value:37 }, { label:'许愿行为', value:35.5 },
+                { label:'风水布局', value:34.4 }, { label:'符咒使用', value:30.7 },
+                { label:'五行穿衣法', value:23.1 }, { label:'数字日期迷信', value:22.5 }
+            ];
+            var maxVal = 70, n = items.length;
+            var ringInner = 70, ringOuter = 210, ringStep = (ringOuter - ringInner) / n;
+            var colors = [
+                '#a78bfa','#9b6ff0','#8b5cf6','#7c3aed','#6d28d9',
+                '#22d3ee','#06b6d4','#0891b2','#0e7490','#155e75'
+            ];
+            var hoverIdx = -1;
+
+            function draw(hover) {
+                ctx.clearRect(0, 0, W, H);
+                // 右侧图例区域
+                var lx = 430, ly0 = 35, lstep = 45;
+
+                for (var i = 0; i < n; i++) {
+                    var inner = ringInner + i * ringStep;
+                    var outer = inner + ringStep - 2;
+                    var angle = (items[i].value / maxVal) * Math.PI * 2;
+                    var isHover = (hover === i);
+
+                    // 背景轨道
+                    ctx.beginPath();
+                    ctx.arc(cx, cy, outer, 0, Math.PI * 2);
+                    ctx.arc(cx, cy, inner, Math.PI * 2, 0, true);
+                    ctx.fillStyle = isHover ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.02)';
+                    ctx.fill();
+
+                    // 数据弧
+                    ctx.beginPath();
+                    ctx.arc(cx, cy, outer, -Math.PI/2, -Math.PI/2 + angle);
+                    ctx.arc(cx, cy, inner, -Math.PI/2 + angle, -Math.PI/2, true);
+                    ctx.closePath();
+                    ctx.fillStyle = colors[i];
+                    ctx.globalAlpha = isHover ? 1 : 0.8;
+                    ctx.fill();
+                    ctx.globalAlpha = 1;
+                    if (isHover) {
+                        ctx.strokeStyle = '#fff';
+                        ctx.lineWidth = 2;
+                        ctx.stroke();
+                    }
+
+                    // 末端圆点
+                    var endX = cx + (outer + inner)/2 * Math.cos(-Math.PI/2 + angle);
+                    var endY = cy + (outer + inner)/2 * Math.sin(-Math.PI/2 + angle);
+                    ctx.beginPath();
+                    ctx.arc(endX, endY, isHover ? ringStep/2 : ringStep/2 - 2, 0, Math.PI * 2);
+                    ctx.fillStyle = isHover ? '#fff' : colors[i];
+                    ctx.fill();
+
+                    // 右侧图例
+                    var ly = ly0 + i * lstep;
+                    ctx.fillStyle = colors[i];
+                    ctx.fillRect(lx, ly - 6, 14, 14);
+                    ctx.fillStyle = isHover ? '#fff' : '#c4b5fd';
+                    ctx.font = (isHover ? 'bold ' : '') + '12px "PingFang SC","Microsoft YaHei",sans-serif';
+                    ctx.textAlign = 'left';
+                    ctx.fillText(items[i].label, lx + 22, ly + 4);
+                    ctx.fillStyle = isHover ? '#22d3ee' : '#6e6491';
+                    ctx.font = '11px "PingFang SC","Microsoft YaHei",sans-serif';
+                    ctx.textAlign = 'right';
+                    ctx.fillText(items[i].value + '%', lx + 185, ly + 4);
+                }
+
+                // 中心文字
+                ctx.fillStyle = '#a78bfa';
+                ctx.font = 'bold 14px "PingFang SC","Microsoft YaHei",sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText('玄学行为', cx, cy - 8);
+                ctx.fillStyle = '#e0d5f0';
+                ctx.font = 'bold 18px "PingFang SC","Microsoft YaHei",sans-serif';
+                ctx.fillText('TOP 10', cx, cy + 14);
+            }
+
+            draw(-1);
+
+            // 鼠标交互
+            canvas.onmousemove = function(e) {
+                var rect = canvas.getBoundingClientRect();
+                var mx = e.clientX - rect.left;
+                var my = e.clientY - rect.top;
+                var dist = Math.sqrt((mx-cx)*(mx-cx) + (my-cy)*(my-cy));
+                var newHover = -1;
+                if (dist >= ringInner && dist <= ringOuter) {
+                    var idx = Math.floor((dist - ringInner) / ringStep);
+                    if (idx >= 0 && idx < n) newHover = idx;
+                }
+                if (newHover !== hoverIdx) {
+                    hoverIdx = newHover;
+                    canvas.style.cursor = hoverIdx >= 0 ? 'pointer' : 'default';
+                    draw(hoverIdx);
+                }
+            };
+            canvas.onmouseleave = function() { hoverIdx = -1; draw(-1); };
+        })();
+
+        // 男女压力对比（旋风图）
+        c = document.getElementById('chartPressureGender');
+        if (c) {
+            cfg = {
+                type: 'bar',
+                data: {
+                    labels: ['经济压力','心理压力','学业/工作压力','生理压力','关系压力'],
+                    datasets: [
+                        { label:'男性', data:[-31.0,-25.6,-22.4,-19.0,-14.2],
+                          backgroundColor:'rgba(34,211,238,0.7)', borderColor:'#22d3ee', borderWidth:1, borderRadius:4,
+                          barPercentage: 0.5, categoryPercentage: 0.7 },
+                        { label:'女性', data:[22.9,35.9,24.2,22.6,15.2],
+                          backgroundColor:'rgba(167,139,250,0.7)', borderColor:'#a78bfa', borderWidth:1, borderRadius:4,
+                          barPercentage: 0.5, categoryPercentage: 0.7 }
+                    ]
+                },
+                options: {
+                    responsive: false,
+                    indexAxis: 'y',
+                    plugins: {
+                        legend: { position:'top', labels:{ color:'#a89bc4', usePointStyle:true, padding:16, font:{ size:12 } } },
+                        tooltip: { callbacks:{ label:function(ctx){ return ctx.dataset.label + ': ' + Math.abs(ctx.raw) + '%'; } } }
+                    },
+                    scales: {
+                        x: {
+                            stacked: false,
+                            ticks: { color:'#6e6491', callback:function(v){ return Math.abs(v)+'%'; }, stepSize:10 },
+                            grid: { color:'rgba(124,58,237,0.08)' },
+                            min: -40, max: 40
+                        },
+                        y: {
+                            ticks: { color:'#a89bc4', font:{ size:12 }, padding: 10 },
+                            grid: { display: false },
+                            position: 'left'
+                        }
+                    }
+                }
+            };
+            c._chart = c._chart = new Chart(c, cfg);
+        }
+    })();
+    </script>
+
+    <!-- 脚本块7：第3章图表 -->
+    <script>
+    (function() {
+        if (typeof Chart === 'undefined') return;
+
+        // --- 压力程度（ECharts 立体环形图） ---
+        (function() {
+            var dom = document.getElementById('chartStressLevel');
+            if (!dom || typeof echarts === 'undefined') return;
+            var chart = echarts.init(dom, null, {width:480, height:480});
+            var data = [
+                { name:'几乎没有压力', short:'几乎无', value:4.17 },
+                { name:'轻微压力\n偶尔有困扰', short:'轻微', value:26.67 },
+                { name:'中等压力\n经常感到紧张', short:'中等', value:40 },
+                { name:'压力较大\n明显影响情绪/睡眠', short:'较大', value:27.5 },
+                { name:'压力极大\n难以承受', short:'极大', value:1.67 }
+            ];
+            var colors = ['#c4b5fd','#a78bfa','#8b5cf6','#7c3aed','#6d28d9'];
+            chart.setOption({
+                tooltip: { trigger:'item', backgroundColor:'rgba(22,22,58,0.95)', borderColor:'rgba(124,58,237,0.5)', textStyle:{ color:'#e0d5f0', fontSize:13 },
+                    formatter: function(p) { return p.data.name.replace(/\n/g,'') + '<br/><b>' + p.value + '%</b>'; } },
+                graphic: [{ type:'text', left:'center', bottom:'30%',
+                    style:{ text:'62.8%', fontSize:30, fontWeight:'bold', fill:'#d8b4fe', textAlign:'center' } },
+                    { type:'text', left:'center', bottom:'24%',
+                    style:{ text:'处于中高压力状态', fontSize:12, fill:'#a78bfa', textAlign:'center' } }],
+                series: [{
+                    type: 'pie',
+                    radius: ['35%','45%'],
+                    center: ['50%','52%'],
+                    startAngle: 180,
+                    endAngle: 360,
+                    avoidLabelOverlap: false,
+                    itemStyle: { borderRadius:6, borderColor:'#0a0a1a', borderWidth:2 },
+                    label: { show:true, position:'outside', color:'#e0d5f0', fontSize:11, lineHeight:14,
+                        formatter:function(p){ return p.data.name + '\n' + p.value + '%'; } },
+                    labelLine: { show:true, length:25, length2:15, lineStyle:{ color:'rgba(167,139,250,0.4)', width:1 } },
+                    emphasis: {
+                        scaleSize: 8,
+                        itemStyle: { shadowBlur:20, shadowColor:'rgba(0,0,0,0.5)', shadowOffsetY:4 },
+                        label: { fontSize:12, fontWeight:'bold', color:'#fff' }
+                    },
+                    data: data.map(function(d,i){ return { name:d.name, value:d.value, itemStyle:{ color:colors[i] } }; })
+                }]
+            });
+            setTimeout(function(){ chart.resize({width:480, height:480}); }, 100);
+        })();
+
+        // --- 压力来源（气泡图 — 等比放大，保证交互） ---
+        (function() {
+            var c = document.getElementById('chartStressSource');
+            if (!c) return;
+            var items = [
+                {l:'学业/职业发展',v:94.17},{l:'经济状况',v:39.17},
+                {l:'健康与身体',v:37.5},{l:'人际关系',v:32.5},
+                {l:'婚恋情感',v:9.17},{l:'其他',v:0.83}
+            ];
+            var colors = ['rgba(167,139,250,0.8)','rgba(124,58,237,0.7)','rgba(34,211,238,0.7)','rgba(167,139,250,0.6)','rgba(34,211,238,0.5)','rgba(110,100,145,0.5)'];
+            c._chart = new Chart(c, {
+                type: 'bubble',
+                data: {
+                    datasets: items.map(function(it,i){ return { label:it.l, data:[{ x:i+1, y:6, r:Math.max(it.v/2, 12) }], backgroundColor:colors[i], borderColor:'rgba(255,255,255,0.35)', borderWidth:3, hoverBorderWidth:4 }; })
+                },
+                options: {
+                    responsive: false,
+                    interaction: { mode:'nearest', intersect:true },
+                    plugins: {
+                        legend: { display:false },
+                        tooltip: {
+                            backgroundColor:'rgba(22,22,58,0.95)', titleColor:'#e0d5f0', bodyColor:'#e0d5f0',
+                            callbacks: {
+                                label: function(ctx) { return '占比: '+items[ctx.datasetIndex].v+'%'; }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: { min:0, max:7, ticks:{ stepSize:1, color:'#6e6491', callback:function(v){ return v>0&&v<=items.length?items[v-1].l:''; }, font:{size:11} }, grid:{display:false} },
+                        y: { min:0, max:14, ticks:{display:false}, grid:{display:false} }
+                    }
+                }
+            });
+        })();
+
+        // --- 压力下情绪（表情进度条 - Canvas绘制） ---
+        (function() {
+            var canvas = document.getElementById('chartEmotions');
+            if (!canvas) return;
+            var ctx = canvas.getContext('2d');
+            var W = canvas.width, H = canvas.height;
+            var items = [
+                {label:'焦虑', value:73.9, emoji:'😰', color:'#ef4444'},
+                {label:'烦躁', value:50.4, emoji:'😤', color:'#f59e0b'},
+                {label:'自我怀疑', value:45.4, emoji:'😞', color:'#8b5cf6'}
+            ];
+            var barH = 55, gap = 30, startY = 40, barW = 320, startX = 90;
+            ctx.clearRect(0, 0, W, H);
+            items.forEach(function(it, i) {
+                var y = startY + i * (barH + gap);
+                // emoji
+                ctx.font = '36px serif';
+                ctx.textAlign = 'center';
+                ctx.fillText(it.emoji, 40, y + 32);
+                // 背景条
+                ctx.fillStyle = 'rgba(255,255,255,0.05)';
+                ctx.beginPath();
+                ctx.roundRect(startX, y, barW, barH, 12);
+                ctx.fill();
+                // 数据条
+                var w = barW * it.value / 100;
+                var grad = ctx.createLinearGradient(startX, 0, startX + barW, 0);
+                grad.addColorStop(0, it.color);
+                grad.addColorStop(1, it.color.replace(')','.4)'));
+                ctx.fillStyle = grad;
+                ctx.beginPath();
+                ctx.roundRect(startX, y, w, barH, 12);
+                ctx.fill();
+                // 文字
+                ctx.fillStyle = '#fff';
+                ctx.font = 'bold 14px "PingFang SC","Microsoft YaHei",sans-serif';
+                ctx.textAlign = 'left';
+                ctx.fillText(it.label + ' ' + it.value + '%', startX + 14, y + 34);
+            });
+        })();
+
+        // --- 压力下行为（游戏技能条风格） ---
+        (function() {
+            var canvas = document.getElementById('chartBehaviors');
+            if (!canvas) return;
+            var ctx = canvas.getContext('2d');
+            var W = canvas.width, H = canvas.height;
+            var items = [
+                {label:'刷短视频/游戏逃避', value:58.7, icon:'🎮'},
+                {label:'拖延', value:50.0, icon:'⏰'},
+                {label:'工作/学习效率下降', value:47.5, icon:'📉'},
+                {label:'睡眠紊乱', value:47.3, icon:'😴'}
+            ];
+            var barH = 40, gap = 20, startY = 30, barW = 400, startX = 160;
+            ctx.clearRect(0, 0, W, H);
+            items.forEach(function(it, i) {
+                var y = startY + i * (barH + gap);
+                // 图标
+                ctx.font = '24px serif';
+                ctx.textAlign = 'center';
+                ctx.fillText(it.icon, 20, y + 28);
+                // 标签
+                ctx.fillStyle = '#a89bc4';
+                ctx.font = '12px "PingFang SC","Microsoft YaHei",sans-serif';
+                ctx.textAlign = 'right';
+                ctx.fillText(it.label, startX - 10, y + 28);
+                // 背景条
+                ctx.fillStyle = 'rgba(255,255,255,0.05)';
+                ctx.fillRect(startX, y + 10, barW, 20);
+                // 数据条（分段颜色）
+                var w = barW * it.value / 100;
+                var grad = ctx.createLinearGradient(startX, 0, startX + barW, 0);
+                grad.addColorStop(0, '#a78bfa');
+                grad.addColorStop(1, '#22d3ee');
+                ctx.fillStyle = grad;
+                ctx.fillRect(startX, y + 10, w, 20);
+                // 数值
+                ctx.fillStyle = '#fff';
+                ctx.font = 'bold 13px "PingFang SC","Microsoft YaHei",sans-serif';
+                ctx.textAlign = 'left';
+                ctx.fillText(it.value + '%', startX + w + 10, y + 26);
+            });
+        })();
+
+        // --- 不同身份压力（柱状图） ---
+        (function() {
+            var c = document.getElementById('chartIdentityStress');
+            if (!c) return;
+            c._chart = new Chart(c, {
+                type: 'bar',
+                data: {
+                    labels: ['职场过渡期','学校→职场过渡期','在校学习','在职工作'],
+                    datasets: [{
+                        label: '中高压力占比(%)', data: [74.5, 71.0, 60.3, 58.0],
+                        backgroundColor: ['#ef4444','#f59e0b','#8b5cf6','#22d3ee'],
+                        borderColor: 'transparent', borderWidth: 0, borderRadius: 20,
+                        barPercentage: 0.4, categoryPercentage: 0.6
+                    }]
+                },
+                options: {
+                    responsive: false,
+                    plugins: { legend: { display:false }, tooltip: { callbacks: { label: function(ctx) { return ctx.raw + '%'; } } } },
+                    scales: {
+                        x: { ticks: { color: '#a89bc4', font: { size:11 } }, grid: { display:false } },
+                        y: { ticks: { color: '#6e6491', callback: function(v) { return v + '%'; } }, grid: { color: 'rgba(124,58,237,0.08)' }, min: 50, max: 80 }
+                    }
+                }
+            });
+        })();
+
+        // --- 使用场景（雷达图） ---
+        (function() {
+            var c = document.getElementById('chartScenarios');
+            if (!c) return;
+            c._chart = c._chart = new Chart(c, {
+                type: 'radar',
+                data: {
+                    labels: ['职业选择困难','压力大需安慰','纯粹好奇娱乐','感情人际不顺','作为社交话题'],
+                    datasets: [{
+                        label: '占比(%)', data: [61.86, 61.86, 57.73, 35.05, 21.65],
+                        backgroundColor: 'rgba(167,139,250,0.25)',
+                        borderColor: '#a78bfa', borderWidth: 3,
+                        pointBackgroundColor: '#a78bfa', pointBorderColor: '#fff', pointRadius: 5, pointBorderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: false,
+                    plugins: { legend: { display:false }, tooltip: { callbacks: { label: function(ctx) { return ctx.raw + '%'; } } } },
+                    scales: {
+                        r: {
+                            min: 0, max: 70,
+                            ticks: { color: '#6e6491', backdropColor: 'transparent', stepSize: 20, font: { size: 9 } },
+                            grid: { color: 'rgba(124,58,237,0.15)' },
+                            angleLines: { color: 'rgba(124,58,237,0.1)' },
+                            pointLabels: { color: '#a89bc4', font: { size: 10 } }
+                        }
+                    }
+                }
+            });
+        })();
+
+        // --- 核心压力源：分段堆叠横向条形图 ---
+        (function() {
+            var c = document.getElementById('chartCoreStress');
+            if (!c) return;
+            var categories = [
+                { label:'学业与职业', items:[
+                    {l:'考试竞争',v:31.9},{l:'工作强度',v:30.1},{l:'职场发展困惑',v:29.5},
+                    {l:'课程/任务压力',v:23.5},{l:'毕业论文困难',v:19.3},{l:'导师/领导压力',v:10.6}
+                ], hues: [0,15,30,45,60,75] },
+                { label:'自我与心理', items:[
+                    {l:'对未来不确定',v:41.9},{l:'对现状不满',v:41.6},{l:'同辈比较',v:28.3},
+                    {l:'不知道想要什么',v:21.7},{l:'无法掌控情绪',v:16.7}
+                ], hues: [260,270,280,290,300] },
+                { label:'人际关系', items:[
+                    {l:'父母/长辈期待',v:23.1},{l:'家庭不和睦',v:12.7},{l:'伴侣关系',v:8.8},{l:'关系不佳',v:7.5}
+                ], hues: [185,195,205,215] },
+                { label:'经济与健康', items:[
+                    {l:'金钱困难',v:26.1},{l:'身体健康',v:21.7},{l:'体型不满',v:20.3},{l:'家人健康',v:8.8}
+                ], hues: [155,165,175,185] }
+            ];
+            var maxItems = 0;
+            categories.forEach(function(cat){ if(cat.items.length>maxItems) maxItems=cat.items.length; });
+            var datasets = [];
+            for (var si = 0; si < maxItems; si++) {
+                var data = [], bg = [];
+                categories.forEach(function(cat, ci){
+                    if (si < cat.items.length) { data.push(cat.items[si].v); bg.push('hsl('+cat.hues[si]+',55%,58%)'); }
+                    else { data.push(0); bg.push('transparent'); }
+                });
+                datasets.push({ label:'seg'+si, data:data, backgroundColor:bg, borderColor:'#0a0a1a', borderWidth:1, borderSkipped:false, borderRadius:0 });
+            }
+            c._chart = new Chart(c, {
+                type: 'bar',
+                data: { labels: categories.map(function(c){ return c.label; }), datasets: datasets },
+                options: {
+                    responsive: false,
+                    indexAxis: 'y',
+                    interaction: { mode:'nearest', intersect:true },
+                    plugins: {
+                        legend: { display:false },
+                        tooltip: { backgroundColor:'rgba(22,22,58,0.95)', titleColor:'#e0d5f0', bodyColor:'#e0d5f0',
+                            callbacks:{ label:function(ctx){
+                                var cat=categories[ctx.dataIndex];
+                                if(cat&&ctx.datasetIndex<cat.items.length){ return cat.items[ctx.datasetIndex].l+': '+cat.items[ctx.datasetIndex].v+'%'; }
+                                return '';
+                            }}
+                        }
+                    },
+                    scales: {
+                        x: { stacked:true, max:180, ticks:{ color:'#6e6491', callback:function(v){return v+'%';} }, grid:{ color:'rgba(124,58,237,0.08)' } },
+                        y: { stacked:true, ticks:{ color:'#a89bc4', font:{size:12} }, grid:{ display:false } }
+                    }
+                }
+            });
+    })();
+    })();
+    </script>
+
+    <!-- 脚本块8：IP热力图（双数据源切换） -->
+    <script>
+    (function initIPHeatmap() {
+        var dom = document.getElementById('chartIPHeatmap');
+        if (!dom || typeof echarts === 'undefined') return;
+        if (typeof chinaGeoJSON === 'undefined') return;
+
+        var chart = echarts.init(dom);
+        echarts.registerMap('china', chinaGeoJSON);
+        window.addEventListener('resize', function(){ chart.resize(); });
+        var currentSource = 'xhs';
+
+        // 小红书数据（预嵌入）
+        var xhsData = {
+            '广东省':257,'江苏省':129,'浙江省':117,'山东省':105,'北京市':76,
+            '河北省':70,'四川省':67,'福建省':67,'上海市':65,'湖北省':61,
+            '安徽省':56,'河南省':55,'陕西省':51,'江西省':50,'湖南省':48,
+            '重庆市':40,'广西壮族自治区':39,'辽宁省':35,'云南省':30,
+            '贵州省':23,'黑龙江省':23,'山西省':20,'内蒙古自治区':18,
+            '海南省':17,'天津市':16,'甘肃省':16,'吉林省':16,
+            '新疆维吾尔自治区':14,'香港特别行政区':13,'宁夏回族自治区':7,
+            '台湾省':5,'青海省':1,'西藏自治区':1,'澳门特别行政区':1
+        };
+        var xhsOverseas = 55, xhsDomestic = 1307;
+
+        // 贴吧数据（来自 ip_heatmap_embed (1).html）
+        var tiebaData = {
+            '广东省':489,'福建省':339,'四川省':322,'浙江省':270,'湖北省':236,
+            '天津市':217,'上海市':213,'江苏省':171,'北京市':156,'山东省':141,
+            '辽宁省':138,'河南省':103,'陕西省':90,'重庆市':86,'江西省':85,
+            '广西壮族自治区':82,'湖南省':69,'安徽省':65,'新疆维吾尔自治区':56,
+            '河北省':53,'山西省':44,'吉林省':44,'贵州省':26,'黑龙江省':22,
+            '云南省':18,'海南省':15,'香港特别行政区':16,'内蒙古自治区':11,
+            '台湾省':4,'青海省':2,'甘肃省':2,'宁夏回族自治区':2,'澳门特别行政区':1
+        };
+        var tiebaOverseas = 0, tiebaDomestic = 3426;
+
+        function buildMapData(dataObj) {
+            var mapData = [], maxVal = 0;
+            Object.keys(dataObj).forEach(function(fullName){
+                var count = dataObj[fullName];
+                if (count > maxVal) maxVal = count;
+                mapData.push({ name:fullName, value:count });
+                var sn = fullName.replace(/省|市|壮族自治区|回族自治区|维吾尔自治区|自治区|特别行政区/g,'');
+                if (sn !== fullName) mapData.push({ name:sn, value:count });
+            });
+            return { mapData:mapData, maxVal:maxVal };
+        }
+
+        function renderMap(dataObj, totalDom, totalOvr, sourceLabel) {
+            var result = buildMapData(dataObj);
+            document.getElementById('heatmapSource').textContent = '数据来源：' + sourceLabel + '平台AI算命相关评论IP属地统计';
+            chart.setOption({
+                tooltip: { trigger:'item', backgroundColor:'rgba(22,22,58,0.95)', borderColor:'rgba(124,58,237,0.5)', textStyle:{ color:'#e0d5f0', fontSize:12 },
+                    formatter:function(p){ return p.name + '<br/>' + sourceLabel + '评论数：<b>' + (p.value||0) + '</b> 条'; } },
+                visualMap: { min:0, max:result.maxVal, left:0, top:40, calculable:true,
+                    orient:'vertical',
+                    inRange:{ color:['rgba(22,22,58,0.5)','rgba(124,58,237,0.4)','rgba(167,139,250,0.6)','rgba(34,211,238,0.7)','#22d3ee'] },
+                    text:['高','低'], textStyle:{ color:'#c4b5fd', fontSize:12, fontWeight:'bold' },
+                    textGap:8, itemWidth:14, itemHeight:120 },
+                graphic: [{ type:'text', left:'center', bottom:10, style:{ text:'国内：'+totalDom+'条 | 海外：'+totalOvr+'条', fill:'#a89bc4', fontSize:10, fontFamily:'PingFang SC,Microsoft YaHei,sans-serif' } }],
+                series: [{ type:'map', map:'china', roam:true, zoom:1.15, top:30,
+                    label: { show:true, fontSize:9, color:'rgba(255,255,255,0.45)',
+                        formatter: function(p) {
+                            var n = p.name;
+                            // 统一简化为2-3字短名
+                            n = n.replace(/省|市|壮族自治区|回族自治区|维吾尔自治区|自治区|特别行政区/g,'');
+                            return n;
+                        }
+                    },
+                    emphasis: { label:{ show:true, fontSize:14, fontWeight:'bold', color:'#fff' }, itemStyle:{ areaColor:'#fbbf24' } },
+                    itemStyle: { borderColor:'rgba(255,255,255,0.1)', borderWidth:0.5, areaColor:'rgba(22,22,40,0.8)' },
+                    data: result.mapData }]
+            }, true);
+        }
+
+        // 初始渲染小红书
+        renderMap(xhsData, xhsDomestic, xhsOverseas, '小红书');
+
+        // 全局切换函数
+        window.switchHeatmap = function(source) {
+            currentSource = source;
+            document.getElementById('btnXHS').style.background = source === 'xhs' ? '#a78bfa' : 'transparent';
+            document.getElementById('btnXHS').style.color = source === 'xhs' ? '#fff' : '#a89bc4';
+            document.getElementById('btnXHS').style.borderColor = source === 'xhs' ? '#a78bfa' : 'rgba(167,139,250,0.4)';
+            document.getElementById('btnTB').style.background = source === 'tieba' ? '#a78bfa' : 'transparent';
+            document.getElementById('btnTB').style.color = source === 'tieba' ? '#fff' : '#a89bc4';
+            document.getElementById('btnTB').style.borderColor = source === 'tieba' ? '#a78bfa' : 'rgba(167,139,250,0.4)';
+
+            if (source === 'xhs') {
+                renderMap(xhsData, xhsDomestic, xhsOverseas, '小红书');
+            } else {
+                renderMap(tiebaData, tiebaDomestic, tiebaOverseas, '贴吧');
+            }
+        };
+    })();
+    </script>
+
+    <!-- 脚本块0：章节滑动动画导航 -->
+    <script>
+    
+    (function initChapterNav() {
+        var navItems = document.querySelectorAll('.nav-item');
+        // 侧边栏点击：强制解锁全部章节 + 跳转
+        navItems.forEach(function(item){
+            item.addEventListener('click', function(e){
+                e.preventDefault();
+                // 绕过所有门控，直接显示全部内容
+                document.body.classList.add('phone-lit');
+                document.body.classList.add('unlocked');
+                document.body.classList.add('all-shown'); document.body.classList.add('ch3up'); document.body.classList.add('mood-done'); document.body.classList.add('trap-done'); document.body.classList.add('rated');
+                var targetId = item.getAttribute('href').substring(1);
+                var target = document.getElementById(targetId);
+                if (target) { target.style.display = 'flex'; target.scrollIntoView({ behavior:'smooth' }); }
+            });
+        });
+
+        // 初始：章节隐藏
+        var unlocked = false;
+
+        // unlockPhone defined separately below
+    })();
+    </script>
+
+    <!-- 脚本块9：第4-6章 ECharts 图表 -->
+    <script>
+    (function() {
+        if (typeof echarts === 'undefined') return;
+
+        // ====== 巴纳姆效应：旭日图 ======
+        (function() {
+            var dom = document.getElementById('chartBarnum');
+            if (!dom) return;
+            var chart = echarts.init(dom);
+            chart.setOption({
+                title: { text:'笼统描述与自我认知匹配度', left:'center', top:5, textStyle:{ color:'#e0d5f0', fontSize:14, fontWeight:'bold' } },
+                tooltip: { trigger:'item', backgroundColor:'rgba(22,22,58,0.95)', borderColor:'rgba(124,58,237,0.5)', textStyle:{ color:'#e0d5f0' } },
+                series: [{
+                    type: 'sunburst',
+                    data: [
+                        { name:'符合 (86.6%)', itemStyle:{ color:'#a78bfa' }, children:[
+                            { name:'一般', value:47.42, itemStyle:{ color:'#c4b5fd' } },
+                            { name:'比较符合', value:32.99, itemStyle:{ color:'#8b5cf6' } },
+                            { name:'非常符合', value:6.19, itemStyle:{ color:'#7c3aed' } }
+                        ]},
+                        { name:'不符合 (13.4%)', itemStyle:{ color:'#6e6491' }, children:[
+                            { name:'不太符合', value:11.34, itemStyle:{ color:'rgba(110,100,145,0.8)' } },
+                            { name:'非常不符合', value:2.06, itemStyle:{ color:'rgba(110,100,145,0.5)' } }
+                        ]}
+                    ],
+                    radius: ['15%','85%'],
+                    label: { color:'#fff', fontSize:11 },
+                    itemStyle: { borderColor:'#0a0a1a', borderWidth:2 },
+                    emphasis: { itemStyle:{ borderColor:'#fff', borderWidth:3 } }
+                }]
+            });
+        })();
+
+        // ====== 为何选AI：漏斗图 ======
+        (function() {
+            var dom = document.getElementById('chartWhyAI');
+            if (!dom) return;
+            var chart = echarts.init(dom);
+            chart.setOption({
+                title: { text:'选择AI算命而非传统算命的原因', left:'center', top:5, textStyle:{ color:'#e0d5f0', fontSize:14, fontWeight:'bold' } },
+                tooltip: { trigger:'item', backgroundColor:'rgba(22,22,58,0.95)', borderColor:'rgba(124,58,237,0.5)', textStyle:{ color:'#e0d5f0' },
+                    formatter: function(p) { return p.name + '<br/>占比: <b>' + p.value + '%</b>'; } },
+                series: [{
+                    type: 'funnel',
+                    left: '15%', right: '15%', top: 50, bottom: 20,
+                    minSize: '20%', maxSize: '100%',
+                    sort: 'descending', gap: 3,
+                    label: { show:true, position:'inside', color:'#fff', fontSize:12, fontWeight:'bold', formatter:'{b}\n{d}%' },
+                    itemStyle: { borderColor:'#0a0a1a', borderWidth:2 },
+                    emphasis: { label:{ fontSize:16 } },
+                    data: [
+                        { name:'免费或成本低', value:78.35, itemStyle:{ color:'#8b5cf6' } },
+                        { name:'方便快捷', value:72.16, itemStyle:{ color:'#7c3aed' } },
+                        { name:'无心理负担', value:51.55, itemStyle:{ color:'#a78bfa' } },
+                        { name:'娱乐潮流感', value:20.62, itemStyle:{ color:'#c4b5fd' } },
+                        { name:'AI更客观', value:4.43, itemStyle:{ color:'rgba(167,139,250,0.6)' } }
+                    ]
+                }]
+            });
+        })();
+
+        // ====== 风险认知：漏斗图（与选择AI原因同类型） ======
+        (function() {
+            var dom = document.getElementById('chartRisk');
+            if (!dom) return;
+            var chart = echarts.init(dom);
+            chart.setOption({
+                title: { text:'AI算命风险认知', left:'center', top:5, textStyle:{ color:'#e0d5f0', fontSize:14, fontWeight:'bold' } },
+                tooltip: { trigger:'item', backgroundColor:'rgba(22,22,58,0.95)', borderColor:'rgba(124,58,237,0.5)', textStyle:{ color:'#e0d5f0' },
+                    formatter: function(p) { return p.name + '<br/>占比: <b>' + p.value + '%</b>'; } },
+                series: [{
+                    type: 'funnel',
+                    left: '15%', right: '15%', top: 50, bottom: 20,
+                    minSize: '20%', maxSize: '100%',
+                    sort: 'descending', gap: 3,
+                    label: { show:true, position:'inside', color:'#fff', fontSize:12, fontWeight:'bold', formatter:'{b}\n{d}%' },
+                    itemStyle: { borderColor:'#0a0a1a', borderWidth:2 },
+                    emphasis: { label:{ fontSize:16 } },
+                    data: [
+                        { name:'过度依赖', value:65.98, itemStyle:{ color:'#ef4444' } },
+                        { name:'信息泄露', value:63.92, itemStyle:{ color:'#f59e0b' } },
+                        { name:'误导决策', value:62.89, itemStyle:{ color:'#a78bfa' } },
+                        { name:'制造焦虑', value:54.64, itemStyle:{ color:'#7c3aed' } },
+                        { name:'诱导付费', value:31.96, itemStyle:{ color:'#22d3ee' } },
+                        { name:'没风险', value:5.15, itemStyle:{ color:'rgba(110,100,145,0.6)' } }
+                    ]
+                }]
+            });
+        })();
+
+        // ====== 情绪缓解：水平条形图（清晰直观） ======
+        (function() {
+            var dom = document.getElementById('chartRelief');
+            if (!dom || typeof Chart === 'undefined') { dom.innerHTML = ''; return; }
+            dom.innerHTML = '';
+            var data = [
+                { label:'轻微缓解', value:51.55, color:'#8b5cf6' },
+                { label:'几乎无影响', value:29.9, color:'#6e6491' },
+                { label:'说不清', value:10.31, color:'rgba(110,100,145,0.7)' },
+                { label:'明显缓解', value:5.15, color:'#a78bfa' },
+                { label:'反而加重', value:3.09, color:'#ef4444' }
+            ];
+            var canvas = document.createElement('canvas');
+            canvas.width = 480;
+            canvas.height = 260;
+            canvas.style.display = 'block';
+            canvas.style.margin = '0 auto';
+            dom.appendChild(canvas);
+            new Chart(canvas, {
+                type: 'bar',
+                data: {
+                    labels: data.map(function(d){ return d.label; }),
+                    datasets: [{
+                        data: data.map(function(d){ return d.value; }),
+                        backgroundColor: data.map(function(d){ return d.color; }),
+                        borderColor: 'transparent',
+                        borderWidth: 0,
+                        borderRadius: 6,
+                        barThickness: 28
+                    }]
+                },
+                options: {
+                    responsive: false,
+                    indexAxis: 'y',
+                    plugins: {
+                        legend: { display:false },
+                        tooltip: { backgroundColor:'rgba(22,22,58,0.95)', borderColor:'rgba(124,58,237,0.5)', bodyColor:'#e0d5f0',
+                            callbacks:{ label:function(ctx){ return ctx.raw + '%'; } } }
+                    },
+                    scales: {
+                        x: { max:60, ticks:{ color:'#6e6491', callback:function(v){return v+'%';} }, grid:{ color:'rgba(124,58,237,0.08)' } },
+                        y: { ticks:{ color:'#a89bc4', font:{size:12} }, grid:{ display:false } }
+                    }
+                }
+            });
+            var sub = document.createElement('div');
+            sub.style.cssText = 'text-align:center;color:#a89bc4;font-size:11px;margin-top:6px;';
+            sub.textContent = '过半用户获得轻微缓解 · 仅3.09%反而加重';
+            dom.appendChild(sub);
+        })();
+
+        // ====== 付费意愿：仪表盘 ======
+        (function() {
+            var dom = document.getElementById('chartPay');
+            if (!dom) return;
+            var chart = echarts.init(dom);
+            var payData = [
+                { value:76.29, name:'A. 只使用免费功能', detail:'76.3%', arc:[[0.763,'#a78bfa'],[1,'#6e6491']], ptr:'#22d3ee' },
+                { value:20.62, name:'B. 愿意小额付费', detail:'20.6%', arc:[[0.206,'#8b5cf6'],[1,'#6e6491']], ptr:'#f59e0b' },
+                { value:3.09,  name:'C. 愿意付10-50元', detail:'3.1%',  arc:[[0.031,'#7c3aed'],[1,'#6e6491']], ptr:'#ef4444' },
+                { value:0,     name:'D. 愿付更高费用', detail:'0%',     arc:[[1,'#6e6491']], ptr:'#6e6491' }
+            ];
+            var currentPay = 0;
+            chart.setOption({
+                title: { text:'你愿意为AI算命付费吗？', left:'center', top:8, textStyle:{ color:'#e0d5f0', fontSize:14, fontWeight:'bold' } },
+                tooltip: { backgroundColor:'rgba(22,22,58,0.95)', borderColor:'rgba(124,58,237,0.5)', textStyle:{ color:'#e0d5f0' } },
+                series: [{
+                    type: 'gauge',
+                    startAngle: 210, endAngle: -30,
+                    center: ['50%','60%'], radius: '80%',
+                    min: 0, max: 100,
+                    axisLine: { lineStyle:{ width:20, color:[[0.763,'#a78bfa'],[0.97,'#7c3aed'],[1,'#6e6491']] } },
+                    axisTick: { show:false }, splitLine: { show:false }, axisLabel: { show:false },
+                    detail: { valueAnimation:true, formatter:payData[0].detail, color:'#e0d5f0', fontSize:36, fontWeight:'bold', offsetCenter:[0,'60%'] },
+                    title: { offsetCenter:[0,'85%'], color:'#a89bc4', fontSize:13 },
+                    data: [{ value:payData[0].value, name:payData[0].name }],
+                    pointer: { length:'70%', width:6, itemStyle:{ color:'#22d3ee' } }
+                }]
+            });
+            // 点击仪表盘切换数据
+            dom.style.cursor = 'pointer';
+            dom.onclick = function() {
+                currentPay = (currentPay + 1) % payData.length;
+                var d = payData[currentPay];
+                chart.setOption({
+                    series: [{
+                        axisLine: { lineStyle:{ color:d.arc } },
+                        detail:{ formatter:d.detail },
+                        title:{},
+                        data:[{ value:d.value, name:d.name }],
+                        pointer:{ itemStyle:{ color:d.ptr } }
+                    }]
+                });
+            };
+            // 图例提示
+            dom.title = '点击切换数据项';
+        })();
+
+        // ====== 连麦价格：散点气泡图 ======
+        (function() {
+            var dom = document.getElementById('chartLivePrice');
+            if (!dom) return;
+            var chart = echarts.init(dom);
+            var raw = [
+                { name:'紫气*染', price:19.44, tags:'星座/塔罗/五行' },
+                { name:'心动*月岛', price:19.44, tags:'星座/塔罗' },
+                { name:'红豆*析', price:8.64, tags:'星座/塔罗' },
+                { name:'*通密语', price:8.64, tags:'星座/塔罗' },
+                { name:'晚风*寂寥', price:8.64, tags:'星座/五行/心理/国学' },
+                { name:'芒果果果*', price:5.04, tags:'星座/国学' },
+                { name:'*泱', price:5.04, tags:'星座/塔罗' },
+                { name:'好运*甜甜', price:5.04, tags:'星座/心理' }
+            ];
+            chart.setOption({
+                title: { text:'玄学连麦价格（元/分钟）', left:'center', top:5, textStyle:{ color:'#e0d5f0', fontSize:14, fontWeight:'bold' } },
+                tooltip: { backgroundColor:'rgba(22,22,58,0.95)', borderColor:'rgba(124,58,237,0.5)', textStyle:{ color:'#e0d5f0' },
+                    formatter: function(p) { var d=raw[p.dataIndex]; return d.name+'<br/>'+d.price+'元/分钟<br/>标签: '+d.tags; } },
+                grid: { left:130, right:30, top:50, bottom:40 },
+                xAxis: { type:'value', name:'价格 (元/分钟)', nameTextStyle:{ color:'#6e6491' }, axisLabel:{ color:'#6e6491' }, axisLine:{ lineStyle:{ color:'rgba(124,58,237,0.2)' } }, splitLine:{ lineStyle:{ color:'rgba(124,58,237,0.08)' } } },
+                yAxis: { type:'category', data:raw.map(function(d){return d.name;}), axisLabel:{ color:'#a89bc4', fontSize:10 }, axisLine:{show:false}, axisTick:{show:false} },
+                series: [{
+                    type: 'scatter',
+                    data: raw.map(function(d,i){ return { value:[d.price, i], symbolSize: d.price*2.5+10 }; }),
+                    itemStyle: { color: new echarts.graphic.LinearGradient(0,0,1,0,[
+                        { offset:0, color:'#8b5cf6' }, { offset:1, color:'#22d3ee' }
+                    ]), shadowBlur:8, shadowColor:'rgba(0,0,0,0.4)' },
+                    emphasis: { scale:1.5, itemStyle:{ shadowBlur:20 } }
+                }]
+            });
+        })();
+
+        // ====== 缓解总结：进度条组 ======
+        (function() {
+            var dom = document.getElementById('chartReliefSummary');
+            if (!dom) return;
+            dom.innerHTML = '';
+            var data = [
+                { label:'明显缓解', value:5, pct:'5.15%', color:'#a78bfa' },
+                { label:'轻微缓解', value:50, pct:'51.55%', color:'#8b5cf6' },
+                { label:'几乎无影响', value:29, pct:'29.9%', color:'#6e6491' },
+                { label:'反而加重', value:3, pct:'3.09%', color:'#ef4444' },
+                { label:'说不清', value:10, pct:'10.31%', color:'rgba(110,100,145,0.6)' }
+            ];
+            var maxVal = 50;
+            var title = document.createElement('div');
+            title.style.cssText = 'text-align:center;color:#e0d5f0;font-size:14px;font-weight:bold;margin-bottom:16px;';
+            title.textContent = '使用AI算命缓解负面情绪的程度';
+            dom.appendChild(title);
+            data.forEach(function(d) {
+                var row = document.createElement('div');
+                row.style.cssText = 'display:flex;align-items:center;margin-bottom:12px;max-width:450px;margin-left:auto;margin-right:auto;';
+                var lbl = document.createElement('span');
+                lbl.style.cssText = 'width:90px;color:#a89bc4;font-size:11px;text-align:right;padding-right:12px;';
+                lbl.textContent = d.label;
+                var track = document.createElement('div');
+                track.style.cssText = 'flex:1;height:22px;background:rgba(255,255,255,0.04);border-radius:11px;overflow:hidden;position:relative;';
+                var bar = document.createElement('div');
+                var w = (d.value/maxVal)*100;
+                bar.style.cssText = 'height:100%;width:'+w+'%;background:'+d.color+';border-radius:11px;transition:width 0.8s ease;';
+                var val = document.createElement('span');
+                val.style.cssText = 'width:56px;color:#e0d5f0;font-size:12px;font-weight:bold;padding-left:10px;';
+                val.textContent = d.pct;
+                track.appendChild(bar);
+                row.appendChild(lbl); row.appendChild(track); row.appendChild(val);
+                dom.appendChild(row);
+            });
+            var src = document.createElement('div');
+            src.style.cssText = 'text-align:center;color:#6e6491;font-size:10px;margin-top:8px;';
+            src.textContent = '数据来源：自采问卷（N=97）';
+            dom.appendChild(src);
+        })();
+    })();
+    </script>
+
+    <!-- 独立手机解锁脚本 -->
+    <script>
+    var _phoneUnlocked = false;
+    function unlockPhone() {
+        if (_phoneUnlocked) return;
+        _phoneUnlocked = true;
+        document.body.classList.add("phone-lit");
+        var p = document.getElementById("entryPhone");
+        var h = document.getElementById("entryHand");
+        var f = document.getElementById("entryIframe");
+        if (h) h.classList.add("show");
+        if (p) p.classList.add("unlocked");
+        if (f) f.src = f.getAttribute("data-src");
+    }
+    </script>
+
+</body>
+</html>

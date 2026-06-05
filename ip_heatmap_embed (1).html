@@ -1,0 +1,696 @@
+<div id="heatmap_1780566348349" style="width:1189px;height:600px;"></div>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+<script>
+var chart = echarts.init(document.getElementById("heatmap_1780566348349"));
+chart.setOption({
+  "darkMode": "auto",
+  "colorBy": "series",
+  "color": [
+    "#5470c6",
+    "#91cc75",
+    "#fac858",
+    "#ee6666",
+    "#73c0de",
+    "#3ba272",
+    "#fc8452",
+    "#9a60b4",
+    "#ea7ccc"
+  ],
+  "gradientColor": [
+    "#f6efa6",
+    "#d88273",
+    "#bf444c"
+  ],
+  "aria": {
+    "decal": {
+      "decals": [
+        {
+          "color": "rgba(0, 0, 0, 0.2)",
+          "dashArrayX": [
+            1,
+            0
+          ],
+          "dashArrayY": [
+            2,
+            5
+          ],
+          "symbolSize": 1,
+          "rotation": 0.5235987755982988
+        },
+        {
+          "color": "rgba(0, 0, 0, 0.2)",
+          "symbol": "circle",
+          "dashArrayX": [
+            [
+              8,
+              8
+            ],
+            [
+              0,
+              8,
+              8,
+              0
+            ]
+          ],
+          "dashArrayY": [
+            6,
+            0
+          ],
+          "symbolSize": 0.8
+        },
+        {
+          "color": "rgba(0, 0, 0, 0.2)",
+          "dashArrayX": [
+            1,
+            0
+          ],
+          "dashArrayY": [
+            4,
+            3
+          ],
+          "rotation": -0.7853981633974483
+        },
+        {
+          "color": "rgba(0, 0, 0, 0.2)",
+          "dashArrayX": [
+            [
+              6,
+              6
+            ],
+            [
+              0,
+              6,
+              6,
+              0
+            ]
+          ],
+          "dashArrayY": [
+            6,
+            0
+          ]
+        },
+        {
+          "color": "rgba(0, 0, 0, 0.2)",
+          "dashArrayX": [
+            [
+              1,
+              0
+            ],
+            [
+              1,
+              6
+            ]
+          ],
+          "dashArrayY": [
+            1,
+            0,
+            6,
+            0
+          ],
+          "rotation": 0.7853981633974483
+        },
+        {
+          "color": "rgba(0, 0, 0, 0.2)",
+          "symbol": "triangle",
+          "dashArrayX": [
+            [
+              9,
+              9
+            ],
+            [
+              0,
+              9,
+              9,
+              0
+            ]
+          ],
+          "dashArrayY": [
+            7,
+            2
+          ],
+          "symbolSize": 0.75
+        }
+      ]
+    }
+  },
+  "textStyle": {
+    "fontFamily": "Microsoft YaHei",
+    "fontSize": 12,
+    "fontStyle": "normal",
+    "fontWeight": "normal"
+  },
+  "stateAnimation": {
+    "duration": 300,
+    "easing": "cubicOut"
+  },
+  "animation": "auto",
+  "animationDuration": 1000,
+  "animationDurationUpdate": 500,
+  "animationEasing": "cubicInOut",
+  "animationEasingUpdate": "cubicInOut",
+  "animationThreshold": 2000,
+  "progressiveThreshold": 3000,
+  "progressive": 400,
+  "hoverLayerThreshold": 3000,
+  "useUTC": false,
+  "axisPointer": [
+    {
+      "show": "auto",
+      "z": 50,
+      "type": "line",
+      "snap": false,
+      "triggerTooltip": true,
+      "triggerEmphasis": true,
+      "value": null,
+      "status": null,
+      "link": [],
+      "animation": null,
+      "animationDurationUpdate": 200,
+      "lineStyle": {
+        "color": "#B9BEC9",
+        "width": 1,
+        "type": "dashed"
+      },
+      "shadowStyle": {
+        "color": "rgba(210,219,238,0.2)"
+      },
+      "label": {
+        "show": true,
+        "formatter": null,
+        "precision": "auto",
+        "margin": 3,
+        "color": "#fff",
+        "padding": [
+          5,
+          7,
+          5,
+          7
+        ],
+        "backgroundColor": "auto",
+        "borderColor": null,
+        "borderWidth": 0,
+        "borderRadius": 3
+      },
+      "handle": {
+        "show": false,
+        "icon": "M10.7,11.9v-1.3H9.3v1.3c-4.9,0.3-8.8,4.4-8.8,9.4c0,5,3.9,9.1,8.8,9.4h1.3c4.9-0.3,8.8-4.4,8.8-9.4C19.5,16.3,15.6,12.2,10.7,11.9z M13.3,24.4H6.7v-1.2h6.6z M13.3,22H6.7v-1.2h6.6z M13.3,19.6H6.7v-1.2h6.6z",
+        "size": 45,
+        "margin": 50,
+        "color": "#333",
+        "shadowBlur": 3,
+        "shadowColor": "#aaa",
+        "shadowOffsetX": 0,
+        "shadowOffsetY": 2,
+        "throttle": 40
+      }
+    }
+  ],
+  "tooltip": [
+    {
+      "trigger": "item",
+      "z": 60,
+      "show": true,
+      "showContent": true,
+      "triggerOn": "mousemove|click",
+      "alwaysShowContent": false,
+      "displayMode": "single",
+      "renderMode": "auto",
+      "confine": null,
+      "showDelay": 0,
+      "hideDelay": 100,
+      "transitionDuration": 0.4,
+      "enterable": false,
+      "backgroundColor": "#fff",
+      "shadowBlur": 10,
+      "shadowColor": "rgba(0, 0, 0, .2)",
+      "shadowOffsetX": 1,
+      "shadowOffsetY": 2,
+      "borderRadius": 4,
+      "borderWidth": 1,
+      "padding": null,
+      "extraCssText": "",
+      "axisPointer": {
+        "type": "line",
+        "axis": "auto",
+        "animation": "auto",
+        "animationDurationUpdate": 200,
+        "animationEasingUpdate": "exponentialOut",
+        "crossStyle": {
+          "color": "#999",
+          "width": 1,
+          "type": "dashed",
+          "textStyle": {}
+        }
+      },
+      "textStyle": {
+        "color": "#666",
+        "fontSize": 14
+      }
+    }
+  ],
+  "series": [
+    {
+      "name": "评论数",
+      "type": "map",
+      "map": "china",
+      "roam": true,
+      "zoom": 1.4520000000000006,
+      "top": 40,
+      "label": {
+        "show": true,
+        "fontSize": 10,
+        "color": "#555"
+      },
+      "emphasis": {
+        "label": {
+          "show": true,
+          "fontSize": 14,
+          "fontWeight": "bold",
+          "color": "rgb(100,0,0)"
+        },
+        "itemStyle": {
+          "areaColor": "#ffd43b"
+        }
+      },
+      "itemStyle": {
+        "borderColor": "#fff",
+        "borderWidth": 1,
+        "areaColor": "#f5f5f5"
+      },
+      "data": [
+        {
+          "name": "福建省",
+          "value": 339
+        },
+        {
+          "name": "福建",
+          "value": 339
+        },
+        {
+          "name": "天津市",
+          "value": 217
+        },
+        {
+          "name": "天津",
+          "value": 217
+        },
+        {
+          "name": "浙江省",
+          "value": 270
+        },
+        {
+          "name": "浙江",
+          "value": 270
+        },
+        {
+          "name": "江苏省",
+          "value": 171
+        },
+        {
+          "name": "江苏",
+          "value": 171
+        },
+        {
+          "name": "湖南省",
+          "value": 69
+        },
+        {
+          "name": "湖南",
+          "value": 69
+        },
+        {
+          "name": "河南省",
+          "value": 103
+        },
+        {
+          "name": "河南",
+          "value": 103
+        },
+        {
+          "name": "云南省",
+          "value": 18
+        },
+        {
+          "name": "云南",
+          "value": 18
+        },
+        {
+          "name": "广东省",
+          "value": 489
+        },
+        {
+          "name": "广东",
+          "value": 489
+        },
+        {
+          "name": "山西省",
+          "value": 44
+        },
+        {
+          "name": "山西",
+          "value": 44
+        },
+        {
+          "name": "北京市",
+          "value": 156
+        },
+        {
+          "name": "北京",
+          "value": 156
+        },
+        {
+          "name": "广西壮族自治区",
+          "value": 82
+        },
+        {
+          "name": "广西",
+          "value": 82
+        },
+        {
+          "name": "上海市",
+          "value": 213
+        },
+        {
+          "name": "上海",
+          "value": 213
+        },
+        {
+          "name": "海南省",
+          "value": 15
+        },
+        {
+          "name": "海南",
+          "value": 15
+        },
+        {
+          "name": "陕西省",
+          "value": 90
+        },
+        {
+          "name": "陕西",
+          "value": 90
+        },
+        {
+          "name": "四川省",
+          "value": 322
+        },
+        {
+          "name": "四川",
+          "value": 322
+        },
+        {
+          "name": "河北省",
+          "value": 53
+        },
+        {
+          "name": "河北",
+          "value": 53
+        },
+        {
+          "name": "辽宁省",
+          "value": 138
+        },
+        {
+          "name": "辽宁",
+          "value": 138
+        },
+        {
+          "name": "青海省",
+          "value": 2
+        },
+        {
+          "name": "青海",
+          "value": 2
+        },
+        {
+          "name": "湖北省",
+          "value": 236
+        },
+        {
+          "name": "湖北",
+          "value": 236
+        },
+        {
+          "name": "台湾省",
+          "value": 4
+        },
+        {
+          "name": "台湾",
+          "value": 4
+        },
+        {
+          "name": "重庆市",
+          "value": 86
+        },
+        {
+          "name": "重庆",
+          "value": 86
+        },
+        {
+          "name": "黑龙江省",
+          "value": 22
+        },
+        {
+          "name": "黑龙江",
+          "value": 22
+        },
+        {
+          "name": "安徽省",
+          "value": 65
+        },
+        {
+          "name": "安徽",
+          "value": 65
+        },
+        {
+          "name": "内蒙古自治区",
+          "value": 11
+        },
+        {
+          "name": "内蒙古",
+          "value": 11
+        },
+        {
+          "name": "江西省",
+          "value": 85
+        },
+        {
+          "name": "江西",
+          "value": 85
+        },
+        {
+          "name": "贵州省",
+          "value": 26
+        },
+        {
+          "name": "贵州",
+          "value": 26
+        },
+        {
+          "name": "香港特别行政区",
+          "value": 16
+        },
+        {
+          "name": "香港",
+          "value": 16
+        },
+        {
+          "name": "山东省",
+          "value": 141
+        },
+        {
+          "name": "山东",
+          "value": 141
+        },
+        {
+          "name": "吉林省",
+          "value": 44
+        },
+        {
+          "name": "吉林",
+          "value": 44
+        },
+        {
+          "name": "新疆维吾尔自治区",
+          "value": 56
+        },
+        {
+          "name": "新疆",
+          "value": 56
+        },
+        {
+          "name": "澳门特别行政区",
+          "value": 1
+        },
+        {
+          "name": "澳门",
+          "value": 1
+        },
+        {
+          "name": "甘肃省",
+          "value": 2
+        },
+        {
+          "name": "甘肃",
+          "value": 2
+        },
+        {
+          "name": "宁夏回族自治区",
+          "value": 2
+        },
+        {
+          "name": "宁夏",
+          "value": 2
+        }
+      ],
+      "z": 2,
+      "coordinateSystem": "geo",
+      "left": "center",
+      "aspectScale": null,
+      "showLegendSymbol": true,
+      "boundingCoords": null,
+      "center": [
+        105.4097658444603,
+        23.858230492795695
+      ],
+      "scaleLimit": null,
+      "selectedMode": true,
+      "select": {
+        "label": {
+          "show": true,
+          "color": "rgb(100,0,0)"
+        },
+        "itemStyle": {
+          "color": "rgba(255,215,0,0.8)"
+        }
+      },
+      "nameProperty": "name",
+      "selectedMap": {
+        "甘肃省": true
+      }
+    }
+  ],
+  "visualMap": [
+    {
+      "min": 0,
+      "max": 489,
+      "left": 20,
+      "bottom": 20,
+      "calculable": true,
+      "inRange": {
+        "color": [
+          "#f0f5ff",
+          "#bac8ff",
+          "#748ffc",
+          "#4361ee",
+          "#1e3ab5"
+        ]
+      },
+      "text": [
+        "高",
+        "低"
+      ],
+      "textStyle": {
+        "color": "#666",
+        "fontSize": 11
+      },
+      "show": true,
+      "z": 4,
+      "seriesIndex": "all",
+      "right": null,
+      "top": null,
+      "itemWidth": null,
+      "itemHeight": null,
+      "inverse": false,
+      "orient": "vertical",
+      "backgroundColor": "rgba(0,0,0,0)",
+      "borderColor": "#ccc",
+      "contentColor": "#5793f3",
+      "inactiveColor": "#aaa",
+      "borderWidth": 0,
+      "padding": 5,
+      "textGap": 10,
+      "precision": 0,
+      "align": "auto",
+      "hoverLink": true,
+      "realtime": true,
+      "handleIcon": "path://M-11.39,9.77h0a3.5,3.5,0,0,1-3.5,3.5h-22a3.5,3.5,0,0,1-3.5-3.5h0a3.5,3.5,0,0,1,3.5-3.5h22A3.5,3.5,0,0,1-11.39,9.77Z",
+      "handleSize": "120%",
+      "handleStyle": {
+        "borderColor": "#fff",
+        "borderWidth": 1
+      },
+      "indicatorIcon": "circle",
+      "indicatorSize": "50%",
+      "indicatorStyle": {
+        "borderColor": "#fff",
+        "borderWidth": 2,
+        "shadowBlur": 2,
+        "shadowOffsetX": 1,
+        "shadowOffsetY": 1,
+        "shadowColor": "rgba(0,0,0,0.2)"
+      },
+      "target": {
+        "inRange": {
+          "color": [
+            "#f0f5ff",
+            "#bac8ff",
+            "#748ffc",
+            "#4361ee",
+            "#1e3ab5"
+          ]
+        },
+        "outOfRange": {
+          "color": [
+            "rgba(0,0,0,0)"
+          ],
+          "opacity": [
+            0,
+            0
+          ]
+        }
+      },
+      "controller": {
+        "inRange": {
+          "color": [
+            "#f0f5ff",
+            "#bac8ff",
+            "#748ffc",
+            "#4361ee",
+            "#1e3ab5"
+          ],
+          "symbol": [
+            "roundRect"
+          ],
+          "symbolSize": [
+            20,
+            20
+          ]
+        },
+        "outOfRange": {
+          "color": [
+            "#aaa"
+          ],
+          "symbol": [
+            "roundRect"
+          ],
+          "symbolSize": [
+            20,
+            20
+          ]
+        }
+      },
+      "range": [
+        0,
+        489
+      ]
+    }
+  ],
+  "legend": [],
+  "markArea": [],
+  "markLine": [],
+  "markPoint": [],
+  "brush": [],
+  "dataZoom": []
+});
+</script>

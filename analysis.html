@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>词频共现分析工具</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:"Microsoft YaHei",sans-serif;background:#f0f2f5;color:#333;padding:16px}
+.container{max-width:1300px;margin:0 auto}
+h1{text-align:center;margin-bottom:6px;color:#1a1a2e;font-size:22px}
+.subtitle{text-align:center;color:#888;font-size:13px;margin-bottom:16px}
+.section{background:#fff;border-radius:10px;padding:18px;margin-bottom:16px;box-shadow:0 1px 6px rgba(0,0,0,0.06)}
+.section h2{font-size:15px;margin-bottom:8px;color:#444}
+.tip{font-size:11px;color:#999;margin-top:4px}
+.btn-row{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+button{padding:9px 20px;border:none;border-radius:5px;font-size:13px;cursor:pointer;font-weight:bold;transition:all .2s}
+.btn-primary{background:#4361ee;color:#fff}
+.btn-primary:hover{background:#3651d9}
+.btn-success{background:#06d6a0;color:#fff}
+.btn-success:hover{background:#05b88c}
+.btn-outline{background:#fff;color:#4361ee;border:1px solid #4361ee}
+.btn-outline:hover{background:#eef1ff}
+.btn-danger{background:#ef476f;color:#fff}
+.btn-danger:hover{background:#d63d62}
+.stats{display:flex;gap:12px;margin-bottom:12px;flex-wrap:wrap}
+.stat{padding:8px 14px;background:#f0f5ff;border-radius:6px;flex:1;min-width:90px}
+.stat .label{font-size:11px;color:#999}
+.stat .value{font-size:20px;font-weight:bold;color:#4361ee}
+.toolbar{display:flex;gap:8px;margin-bottom:10px;align-items:center;flex-wrap:wrap}
+.toolbar input{padding:6px 10px;border:1px solid #ddd;border-radius:4px;font-size:12px;width:200px}
+.toolbar select{padding:6px 10px;border:1px solid #ddd;border-radius:4px;font-size:12px}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th,td{padding:6px 9px;text-align:left;border-bottom:1px solid #f0f0f0}
+th{background:#f7f8fc;font-weight:600;position:sticky;top:0;user-select:none;cursor:pointer}
+th:hover{background:#eef0f8}
+tr:hover{background:#f8fbff}
+.num{text-align:right;width:50px}
+.bar-cell{width:120px}
+.bar-wrap{background:#eee;border-radius:3px;height:12px}
+.bar{background:linear-gradient(90deg,#4361ee,#7b93ff);border-radius:3px;height:100%;transition:width .3s}
+.word-cell{font-weight:600}
+.pct{color:#888;font-size:10px}
+#status{padding:8px 12px;background:#fefce8;border-radius:5px;font-size:12px;color:#666;margin-top:8px;display:none}
+#status.show{display:block}
+.count{color:#999;font-size:11px;text-align:center;margin-top:8px}
+.inline-label{font-size:13px;white-space:nowrap}
+.kw-highlight{background:#fef3c7;color:#92400e;padding:1px 4px;border-radius:3px;font-weight:bold}
+#dropZone:hover{background:#eef1ff!important;border-color:#06d6a0!important}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>词频共现分析工具</h1>
+<p class="subtitle">导入CSV文件 → 自动分词 → 导出可视化数据（适合计算机新手）</p>
+
+<div class="section">
+<h2>📂 1. 导入数据文件（支持多文件）</h2>
+<p class="tip">点击选择文件时可<b>多选</b>（Ctrl+点击），或多次拖拽/选择。支持 <b>.csv</b> / <b>.tsv</b>，自动合并去重。</p>
+<div style="border:2px dashed #4361ee;border-radius:10px;padding:30px;text-align:center;background:#f8faff;cursor:pointer;margin-bottom:10px;transition:all .2s"
+     id="dropZone"
+     ondragover="this.style.borderColor='#06d6a0';this.style.background='#f0fdf8';event.preventDefault()"
+     ondragleave="this.style.borderColor='#4361ee';this.style.background='#f8faff'"
+     ondrop="handleDrop(event);event.preventDefault()"
+     onclick="document.getElementById('fileInput').click()">
+    <div style="font-size:40px;margin-bottom:8px;">📁</div>
+    <div style="font-size:15px;color:#4361ee;font-weight:bold;">点击选择文件 或 拖拽文件到这里</div>
+    <div style="font-size:12px;color:#999;margin-top:4px;">支持 .csv / .tsv 格式 · 自动识别内容列</div>
+    <input type="file" id="fileInput" accept=".csv,.tsv,.txt" style="display:none" onchange="handleFileSelect(event)" multiple>
+</div>
+<div id="fileName" style="font-size:12px;color:#06d6a0;margin-bottom:8px;display:none;"></div>
+</div>
+
+<div class="section">
+<h2>🔗 2. 设置关联词（可选）</h2>
+<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+<label class="inline-label">分析与</label>
+<input type="text" id="keywordInput" placeholder="例如：AI算命、DeepSeek、八字" style="padding:7px 10px;border:1px solid #ddd;border-radius:5px;font-size:14px;width:260px">
+<label class="inline-label">同时出现的词语：</label>
+<select id="keywordMode" style="padding:5px 8px;border:1px solid #ddd;border-radius:4px;font-size:13px">
+<option value="filter">仅统计含此词的用户</option>
+<option value="all" selected>统计全部用户（不限关联词）</option>
+</select>
+</div>
+<p class="tip">填关键词 + 选"仅统计含此词的用户"= 只看说过这个词的用户还说了什么词。留空或选"统计全部用户"= 不做过滤。</p>
+</div>
+
+<div class="section">
+<h2>📊 3. 开始分析</h2>
+<div class="btn-row">
+<button class="btn-primary" onclick="doAnalyze()">🔍 开始分析</button>
+<button class="btn-success" onclick="exportCSV()" id="exportCSVBtn" style="display:none">📥 导出词频表 (CSV)</button>
+<button class="btn-success" onclick="exportCooccurMatrix()" id="exportMatrixBtn" style="display:none">📥 共现矩阵 (CSV)</button>
+<button class="btn-success" onclick="exportEdgeList()" id="exportEdgeBtn" style="display:none">📥 网络边列表 (CSV)</button>
+<button class="btn-outline" onclick="loadPreset()">📂 加载示例数据</button>
+<button class="btn-danger" onclick="clearAll()">🗑️ 清空</button>
+</div>
+<div id="status"></div>
+</div>
+
+<div class="section" id="resultSection" style="display:none">
+<h2>4. 分析结果 <span id="resultTitle"></span></h2>
+<div class="stats" id="statsRow"></div>
+<div class="toolbar">
+<input type="text" id="wordFilter" placeholder="搜索词语..." oninput="renderTable()">
+<select id="minFreq" onchange="renderTable()">
+<option value="1">显示全部</option><option value="2">>=2次</option><option value="3">>=3次</option>
+<option value="5" selected>>=5次</option><option value="10">>=10次</option><option value="20">>=20次</option>
+</select>
+<select id="sortMode" onchange="renderTable()">
+<option value="freq">按频率</option><option value="alpha">按拼音</option>
+</select>
+</div>
+<div id="results"></div>
+<div class="count" id="countInfo"></div>
+</div>
+</div>
+
+<script>
+// ============== 停用词表 ==============
+var SW = new Set([
+  '因为','所以','但是','如果','虽然','然而','而且','或者','并且','以及','及其',
+  '什么','怎么','怎样','为什么','怎么样','这么','那么','多么',
+  '可以','应该','需要','必须','能够','可能','已经','正在','将要','立刻','马上',
+  '觉得','认为','以为','知道','希望','想要','打算','准备','开始','继续',
+  '真的','确实','反正','其实','总是','经常','有时','偶尔','往往','几乎',
+  '不是','不要','不用','不能','不会','不得','不可','不行','不许','不准',
+  '没有','没关系','无所谓','没问题',
+  '现在','以前','以后','之前','之后','时候','一点','有点','一下','一次','两次',
+  '一个人','两个人','第一个','第二个','那种','整个','全部','所有','每个','各种',
+  '我的','你的','他的','她的','它的','他们的','我们的','你们的',
+  '小红书','momo','小红薯','测测','问一问','momo大虾','用户已注销',
+  '真的','确实','感觉','请问','谢谢',
+  'momo大虾','小红薯5','小红薯6',
+  '1万','1.1万','1.4万','6万','10万','7.3万','4.3万','3.3万','1.9万','3.2万','4.5万',
+  '浏览量','访问量','评论数','点赞数','收藏数',
+  'OK','ok','Ok','dddd','aaaa','llll','xxxx','yyyy','zzzz',
+  '一些','很多','好多','太多','不少','许多',
+  '几个','几十','几百','几年','几天','几次',
+  '一定','必须','务必','千万','绝对','完全','万',
+]);
+
+var FC = new Set([
+  '的','了','在','是','我','你','您','他','她','它','们','这','那','哪','什','么','怎','样',
+  '很','太','非','常','比','较','更','最','越','还','再','又','才','刚','就','也','都','只',
+  '可','能','会','要','想','让','把','被','从','到','对','给','跟','和','向','用','因','为',
+  '所','以','但','然','而','且','或','者','并','与','及','等','啊','吧','吗','呢','嘛','哦',
+  '嗯','哈','呀','哎','唉','喂','哇','呵','啦','呗','喽','哟','咚','咔','嘎','嘻','嘿',
+  '去','来','上','下','出','进','过','回','开','走','跑','说','看','做','吃','喝','拿','放',
+  '没','不','已','经','正','现','前','后','时','候','点','些','个','种','次','遍','每','各',
+  '真','确','实','反','总','先','另','别','当','应','该','觉','得','知','道','希','望','认',
+  '需','加','入','请','问','谢','欢','喜','行','对','错','成','全','部','所','任','何',
+  '一','二','三','四','五','六','七','八','九','十','百','千','万','亿','零','两','几','多',
+  '大','小','新','旧','高','低','长','短','快','慢','早','晚','深','浅','轻','重','胖','瘦',
+  '冷','热','难','易','富','穷','贵','贱','远','近','明','暗','粗','细','老','少',
+  '男','女','年','月','日','时','分','秒','今','昨','明','天','周','号','岁',
+  '第','半','每','某','本','另','头','里','外','中','内','旁','边','间','处',
+  '着','了','过','正','在','将','被','受','由',
+  '却','倒','偏','竟','果','毕','究','居','索',
+  '罢','方','即','有','无','否','未','毋','勿','莫','岂',
+]);
+
+var rawDataStore = ''; // 合并后的完整数据
+var loadedFiles = []; // 已加载的文件列表
+var analysisResult = null;
+
+// ============== 文件导入（支持多文件） ==============
+function handleFileSelect(e) {
+  var files = e.target.files;
+  if (!files || files.length === 0) return;
+  loadFiles(Array.from(files));
+}
+
+function handleDrop(e) {
+  var files = e.dataTransfer.files;
+  if (!files || files.length === 0) return;
+  loadFiles(Array.from(files));
+}
+
+function loadFiles(fileList) {
+  var pending = fileList.length;
+  var newContents = [];
+  var newNames = [];
+
+  fileList.forEach(function(file, idx) {
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      newContents.push(e.target.result);
+      newNames.push(file.name);
+      pending--;
+      if (pending === 0) {
+        // 合并：新文件追加到已有数据末尾
+        var combined = rawDataStore;
+        for (var i = 0; i < newContents.length; i++) {
+          var content = newContents[i];
+          var lines = content.split(/\r?\n/).filter(function(l){return l.trim();});
+          if (lines.length >= 2) {
+            // 第一行是表头，追加时跳过
+            var header = lines[0];
+            if (combined && combined.indexOf(header) === 0) {
+              combined += '\n' + lines.slice(1).join('\n');
+            } else {
+              combined += (combined ? '\n' : '') + content;
+            }
+          }
+          loadedFiles.push({ name:newNames[i], lines:lines.length });
+        }
+        rawDataStore = combined;
+        updateFileInfo();
+        status('已加载 ' + loadedFiles.length + ' 个文件，共 ' + combined.split(/\r?\n/).filter(function(l){return l.trim();}).length + ' 行数据。点击"开始分析"');
+      }
+    };
+    reader.readAsText(fileList[idx]);
+  });
+}
+
+function updateFileInfo() {
+  var el = document.getElementById('fileName');
+  el.style.display = 'block';
+  var totalLines = rawDataStore.split(/\r?\n/).filter(function(l){return l.trim();}).length;
+  var html = '✅ 已加载 ' + loadedFiles.length + ' 个文件（' + totalLines + ' 行，' + (rawDataStore.length/1024).toFixed(1) + ' KB）：';
+  loadedFiles.forEach(function(f){
+    html += '<br>&nbsp;&nbsp;📄 ' + f.name + '（' + f.lines + ' 行）';
+  });
+  el.innerHTML = html;
+}
+
+// ============== 状态提示 ==============
+function status(msg) {
+  var el = document.getElementById('status');
+  el.textContent = msg;
+  el.classList.add('show');
+}
+
+// ============== TSV/CSV 解析 ==============
+function parseData(raw) {
+  var allLines = raw.split(/\r?\n/).filter(function(l) { return l.trim(); });
+  if (allLines.length < 2) return { error: '数据行数不足' };
+  // 自动检测分隔符
+  var firstLine = allLines[0];
+  var delim = firstLine.indexOf('\t') >= 0 ? '\t' : ',';
+  // 多文件合并时跳过中间重复的表头行
+  var headerCols = firstLine.split(delim).length;
+  var lines = [allLines[0]];
+  for (var i = 1; i < allLines.length; i++) {
+    var lcols = allLines[i].split(delim).length;
+    // 列数接近表头且内容含元数据列名 → 跳过的表头
+    if (Math.abs(lcols - headerCols) <= 2 && (allLines[i].indexOf('comment_id')>=0 || allLines[i].indexOf('content')>=0 || allLines[i].indexOf('ip_location')>=0 || allLines[i].indexOf('note_id')>=0)) {
+      continue;
+    }
+    lines.push(allLines[i]);
+  }
+  var headers = lines[0].split(delim).map(function(h) { return h.trim(); });
+
+  var ci = headers.indexOf('content');
+  if (ci === -1) ci = headers.indexOf('desc');
+  if (ci === -1) ci = headers.indexOf('title');
+  if (ci === -1) ci = headers.indexOf('text');
+  var ui = headers.indexOf('user_id');
+  if (ci === -1) return { error: '找不到内容列（content/desc/title/text），请检查文件格式。表头：' + headers.slice(0,6).join(', ')+'...' };
+
+  var seen = new Set();
+  var users = {}, errors = 0, skipped = 0;
+  var idIdx = headers.indexOf('comment_id');
+  if (idIdx === -1) idIdx = headers.indexOf('note_id');
+
+  for (var i = 1; i < lines.length; i++) {
+    var cols = lines[i].split(delim);
+    if (cols.length <= Math.max(ci, idIdx>=0?idIdx:0)) { errors++; continue; }
+    if (idIdx >= 0 && cols[idIdx]) {
+      var cid = cols[idIdx].trim();
+      if (seen.has(cid)) { skipped++; continue; }
+      seen.add(cid);
+    }
+    var content = (cols[ci] || '').trim();
+    if (!content || content.length < 2) continue;
+    var uid = (ui >= 0 && cols[ui]) ? cols[ui].trim() : ('u_' + i);
+    if (!users[uid]) users[uid] = [];
+    users[uid].push(content);
+  }
+  return { users:users, errors:errors, skipped:skipped, totalLines:lines.length-1 };
+}
+
+// ============== 文本清洗 & 分词 ==============
+function cleanText(text) {
+  return text.replace(/https?:\/\/[^\s]{4,}/g,' ').replace(/\[[^\]]{1,20}\]/g,' ').replace(/#[^\s#]{2,30}/g,' ')
+    .replace(/[a-f0-9]{16,}/gi,' ').replace(/\d+\.?\d*[Ee][+\-]?\d+/g,' ').replace(/nd_[a-z]{4}\d+_[a-z]{4,6}_[a-z]{2,3}_\d+/g,' ')
+    .replace(/\b\d{10,13}\b/g,' ').replace(/@\S+/g,' ').replace(/\s+/g,' ');
+}
+
+function isBadNgram(w) {
+  if (SW.has(w)) return true;
+  if (/\d/.test(w)) return true;
+  if (/^[^一-鿿]+$/.test(w) && w.length <= 3) return true;
+  for (var i = 0; i < w.length; i++) { if (FC.has(w.charAt(i))) return true; }
+  return false;
+}
+
+function ngramsFiltered(s, ws) {
+  var L = s.length;
+  for (var i = 0; i <= L-2; i++) { var w=s.substring(i,i+2); if (!isBadNgram(w)) ws.add(w); }
+  for (var i = 0; i <= L-3; i++) { var w=s.substring(i,i+3); if (!isBadNgram(w)) ws.add(w); }
+  for (var i = 0; i <= L-4; i++) { var w=s.substring(i,i+4); if (!isBadNgram(w)) ws.add(w); }
+}
+
+function extractWords(text) {
+  var words = new Set(), buf = '';
+  for (var j = 0; j < text.length; j++) {
+    var ch = text.charAt(j);
+    if (/[一-鿿]/.test(ch)) { buf += ch; }
+    else { if (buf) { ngramsFiltered(buf, words); buf = ''; } }
+  }
+  if (buf) ngramsFiltered(buf, words);
+  var ens = text.match(/[a-zA-Z][a-zA-Z0-9._-]{2,14}/g);
+  if (ens) { for (var k=0;k<ens.length;k++) { var lw=ens[k].toLowerCase(); if (lw.length>=3&&!SW.has(lw)) words.add(lw); } }
+  return words;
+}
+
+// ============== 分析 ==============
+function doAnalyze() {
+  if (!rawDataStore) { alert('请先导入文件！点击上方📂区域，可同时选择多个CSV/TSV文件。'); return; }
+  status('正在解析数据...');
+  var parsed = parseData(rawDataStore);
+  if (parsed.error) { status('错误：' + parsed.error); return; }
+
+  var users = parsed.users;
+  var keywordRaw = document.getElementById('keywordInput').value.trim();
+  var keywordMode = document.getElementById('keywordMode').value;
+  var keyword = '', filteredCount = 0;
+
+  if (keywordRaw && keywordMode === 'filter') {
+    keyword = keywordRaw;
+    var filtered = {};
+    var uidList = Object.keys(users);
+    for (var i = 0; i < uidList.length; i++) {
+      var uid = uidList[i];
+      if (users[uid].join(' ').indexOf(keyword) !== -1) filtered[uid] = users[uid];
+    }
+    filteredCount = uidList.length - Object.keys(filtered).length;
+    users = filtered;
+    if (Object.keys(users).length === 0) { status('没有用户提到"' + keyword + '"，请换一个关联词试试'); return; }
+  }
+
+  var userCount = Object.keys(users).length;
+  var totalComments = 0;
+  Object.keys(users).forEach(function(uid){ totalComments += users[uid].length; });
+
+  var msg = '解析：' + userCount + ' 用户，' + totalComments + ' 条数据';
+  if (keyword) msg += '（过滤掉' + filteredCount + '个未提"' + keyword + '"的用户）';
+  msg += '。正在分词...'; status(msg);
+
+  setTimeout(function() {
+    var wordFreq = {}, wordUsers = {};
+    Object.keys(users).forEach(function(uid) {
+      var texts = users[uid];
+      var fullText = '';
+      texts.forEach(function(t){ fullText += cleanText(t) + ' '; });
+      var words = extractWords(fullText);
+      words.forEach(function(word) {
+        if (keyword && keyword === word) return;
+        wordFreq[word] = (wordFreq[word]||0) + 1;
+        if (!wordUsers[word]) wordUsers[word] = new Set();
+        wordUsers[word].add(uid);
+      });
+    });
+
+    // --- 拆词：长词中的高频短词独立拆分 ---
+    // 例：事业姻缘 → 拆为 事业 + 姻缘（如果两者各自频率都高）
+    var splitCandidates = [];
+    var wordListRaw = Object.keys(wordFreq);
+    wordListRaw.forEach(function(longW){
+      if (longW.length < 3) return;
+      // 尝试用2-gram拆分长词
+      var parts = [];
+      for (var i = 0; i <= longW.length - 2; i++) {
+        var sub = longW.substring(i, i+2);
+        if (wordFreq[sub] && wordFreq[sub] >= wordFreq[longW] * 0.5) {
+          parts.push({ word:sub, pos:i });
+        }
+      }
+      // 如果有2个以上高频2-gram覆盖了大部分 → 拆分
+      if (parts.length >= 2) {
+        var covered = 0;
+        parts.forEach(function(p){ covered += p.word.length; });
+        if (covered >= longW.length * 0.8) {
+          splitCandidates.push(longW);
+        }
+      }
+    });
+    // 执行拆分：把长词频率分摊到短词，删除长词
+    splitCandidates.forEach(function(longW){
+      var totalShortFreq = 0;
+      for (var i = 0; i <= longW.length - 2; i++) {
+        var sub = longW.substring(i, i+2);
+        if (wordFreq[sub]) totalShortFreq += wordFreq[sub];
+      }
+      if (totalShortFreq > 0) {
+        var ratio = wordFreq[longW] / totalShortFreq;
+        for (var i = 0; i <= longW.length - 2; i++) {
+          var sub = longW.substring(i, i+2);
+          if (wordFreq[sub]) wordFreq[sub] += Math.round(wordFreq[sub] * ratio * 0.5);
+        }
+      }
+      delete wordFreq[longW];
+    });
+
+    // --- 长词合并：子串词合并到包含它的最长词 ---
+    var wordList = Object.keys(wordFreq);
+    wordList.sort(function(a,b){ return b.length - a.length; }); // 长词优先
+    var merged = {}; // 词 → 最终频率
+    var subsumed = {}; // 被吞并的短词 → 目标长词
+    wordList.forEach(function(longWord){
+      if (subsumed[longWord]) return; // 已被吞并
+      merged[longWord] = wordFreq[longWord];
+      wordList.forEach(function(shortWord){
+        if (shortWord === longWord) return;
+        if (shortWord.length >= longWord.length) return;
+        // 短词是长词的子串
+        if (longWord.indexOf(shortWord) >= 0 && !subsumed[shortWord]) {
+          // 短词频率显著低于长词时合并（短词频率 <= 长词频率 * 1.5）
+          if (wordFreq[shortWord] <= wordFreq[longWord] * 1.5) {
+            merged[longWord] += wordFreq[shortWord];
+            subsumed[shortWord] = longWord;
+          }
+        }
+      });
+    });
+    // 未被吞并的短词保留
+    wordList.forEach(function(w){
+      if (!subsumed[w] && !merged[w]) merged[w] = wordFreq[w];
+    });
+
+    // 更新 wordUsers：短词的用户合并到长词
+    var mergedWordUsers = {};
+    Object.keys(merged).forEach(function(w){ mergedWordUsers[w] = new Set(wordUsers[w]||[]); });
+    Object.keys(subsumed).forEach(function(shortW){
+      var targetW = subsumed[shortW];
+      if (wordUsers[shortW]) {
+        wordUsers[shortW].forEach(function(u){ mergedWordUsers[targetW].add(u); });
+      }
+    });
+
+    var sorted = [];
+    Object.keys(merged).forEach(function(w){ sorted.push([w, merged[w]]); });
+    sorted.sort(function(a,b){ return b[1]-a[1] });
+
+    // 构建用户-词语矩阵（用于共现分析）
+    var userWordMap = {};
+    Object.keys(users).forEach(function(uid) {
+      var texts = users[uid], ft = '';
+      texts.forEach(function(t){ ft += cleanText(t) + ' '; });
+      userWordMap[uid] = extractWords(ft);
+    });
+
+    analysisResult = { sorted:sorted, wordUsers:mergedWordUsers, wordFreq:merged, userCount:userCount, totalComments:totalComments, keyword:keyword, userWordMap:userWordMap, users:users };
+    document.getElementById('resultSection').style.display = 'block';
+    document.getElementById('exportCSVBtn').style.display = 'inline-block';
+    document.getElementById('exportMatrixBtn').style.display = 'inline-block';
+    document.getElementById('exportEdgeBtn').style.display = 'inline-block';
+
+    if (keyword) document.getElementById('resultTitle').innerHTML = '（与 <span class="kw-highlight">' + esc(keyword) + '</span> 共现的词语）';
+    else document.getElementById('resultTitle').textContent = '（全部词语）';
+
+    var cnt5=0, cnt10=0;
+    sorted.forEach(function(s){ if(s[1]>=5) cnt5++; if(s[1]>=10) cnt10++; });
+    document.getElementById('statsRow').innerHTML =
+      '<div class="stat"><div class="label">用户数</div><div class="value">'+userCount+'</div></div>' +
+      '<div class="stat"><div class="label">数据条数</div><div class="value">'+totalComments+'</div></div>' +
+      '<div class="stat"><div class="label">有效词语</div><div class="value">'+sorted.length+'</div></div>' +
+      '<div class="stat"><div class="label">≥5次词语</div><div class="value">'+cnt5+'</div></div>' +
+      '<div class="stat"><div class="label">≥10次词语</div><div class="value">'+cnt10+'</div></div>';
+    status('分析完成！共提取 ' + sorted.length + ' 个有效词语。可导出为CSV用于可视化。');
+    renderTable();
+  }, 30);
+}
+
+function renderTable() {
+  var d = analysisResult; if (!d) return;
+  var filter = (document.getElementById('wordFilter').value||'').trim().toLowerCase();
+  var minFreq = parseInt(document.getElementById('minFreq').value);
+  var sortMode = document.getElementById('sortMode').value;
+  var data = [];
+  d.sorted.forEach(function(s){ if (s[1]>=minFreq && (!filter||s[0].toLowerCase().indexOf(filter)!==-1)) data.push(s); });
+  if (sortMode==='alpha') data.sort(function(a,b){ return a[0].localeCompare(b[0],'zh'); });
+  var maxFreq = data.length>0 ? data[0][1] : 1;
+  var html = '<table><thead><tr><th class="num">#</th><th>词语</th><th class="num">用户数</th><th class="num">占比</th><th>可视化</th></tr></thead><tbody>';
+  var limit = Math.min(data.length, 500);
+  for (var i=0;i<limit;i++) {
+    var w=data[i][0], f=data[i][1], pct=(f/d.userCount*100).toFixed(1), bw=(f/maxFreq*100).toFixed(0);
+    html += '<tr><td class="num">'+(i+1)+'</td><td class="word-cell">'+esc(w)+'</td><td class="num">'+f+'</td><td class="num"><span class="pct">'+pct+'%</span></td><td><div class="bar-wrap"><div class="bar" style="width:'+bw+'%"></div></div></td></tr>';
+  }
+  html += '</tbody></table>';
+  document.getElementById('results').innerHTML = html;
+  document.getElementById('countInfo').textContent = data.length>500 ? '仅显示前500条，共'+data.length+'条。请使用搜索或频率筛选。' : '共'+data.length+'条结果';
+}
+
+// ============== 导出函数 ==============
+
+// 导出词频表 (CSV) - 可用于柱状图/词云
+function exportCSV() {
+  var d = analysisResult; if (!d) return;
+  var prefix = d.keyword ? d.keyword+'_' : '';
+  var csv = '排名,词语,用户数,占比\n';
+  d.sorted.forEach(function(s,i){ csv += (i+1) + ',"' + s[0] + '",' + s[1] + ',' + (s[1]/d.userCount*100).toFixed(1) + '%\n'; });
+  downloadFile(prefix+'词频表.csv', csv);
+}
+
+// 导出共现矩阵 (CSV) - 可用于热力图/矩阵图
+function exportCooccurMatrix() {
+  var d = analysisResult; if (!d) return;
+  var topWords = []; // 取Top20高频词
+  for (var i=0;i<Math.min(20,d.sorted.length);i++) topWords.push(d.sorted[i][0]);
+
+  var matrix = {}; // word1 -> { word2: count }
+  topWords.forEach(function(w){ matrix[w] = {}; });
+
+  // 统计共现（同一用户同时提到两个词）
+  Object.keys(d.users).forEach(function(uid){
+    var texts = d.users[uid], ft = '';
+    texts.forEach(function(t){ ft += cleanText(t) + ' '; });
+    var words = extractWords(ft);
+    var present = [];
+    topWords.forEach(function(w){ if (words.has(w)) present.push(w); });
+    for (var i=0;i<present.length;i++) {
+      for (var j=i+1;j<present.length;j++) {
+        var a=present[i], b=present[j];
+        if (!matrix[a][b]) matrix[a][b]=0;
+        matrix[a][b]++;
+        if (!matrix[b][a]) matrix[b][a]=0;
+        matrix[b][a]++;
+      }
+    }
+  });
+
+  var csv = '词语,' + topWords.join(',') + '\n';
+  topWords.forEach(function(w){
+    var row = [w];
+    topWords.forEach(function(w2){ row.push(matrix[w][w2]||0); });
+    csv += row.join(',') + '\n';
+  });
+  downloadFile('共现矩阵_Top20.csv', csv);
+}
+
+// 导出网络边列表 (CSV) - 可用于关系图/桑基图/网络图
+function exportEdgeList() {
+  var d = analysisResult; if (!d) return;
+  var topWords = [];
+  for (var i=0;i<Math.min(30,d.sorted.length);i++) topWords.push(d.sorted[i][0]);
+
+  var edges = {};
+  Object.keys(d.users).forEach(function(uid){
+    var texts = d.users[uid], ft = '';
+    texts.forEach(function(t){ ft += cleanText(t) + ' '; });
+    var words = extractWords(ft);
+    var present = [];
+    topWords.forEach(function(w){ if (words.has(w)) present.push(w); });
+    for (var i=0;i<present.length;i++) {
+      for (var j=i+1;j<present.length;j++) {
+        var a=present[i], b=present[j];
+        var key = a < b ? a+'|||'+b : b+'|||'+a;
+        edges[key] = (edges[key]||0) + 1;
+      }
+    }
+  });
+
+  var csv = '来源,目标,共现次数,权重\n';
+  Object.keys(edges).forEach(function(key){
+    var parts = key.split('|||');
+    var weight = edges[key];
+    if (weight >= 3) csv += '"' + parts[0] + '","' + parts[1] + '",' + weight + ',' + weight + '\n';
+  });
+  downloadFile('共现边列表_网络图.csv', csv);
+}
+
+function downloadFile(filename, content) {
+  var blob = new Blob(['﻿' + content], { type:'text/csv;charset=utf-8' });
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+  status('已导出：' + filename);
+}
+
+function esc(s) { var d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
+
+function clearAll() {
+  analysisResult = null; rawDataStore = ''; loadedFiles = [];
+  document.getElementById('results').innerHTML = '';
+  document.getElementById('statsRow').innerHTML = '';
+  document.getElementById('countInfo').textContent = '';
+  document.getElementById('resultSection').style.display = 'none';
+  document.getElementById('exportCSVBtn').style.display = 'none';
+  document.getElementById('exportMatrixBtn').style.display = 'none';
+  document.getElementById('exportEdgeBtn').style.display = 'none';
+  document.getElementById('status').classList.remove('show');
+  document.getElementById('status').textContent = '';
+  document.getElementById('resultTitle').textContent = '';
+  document.getElementById('fileName').style.display = 'none';
+}
+
+function loadPreset() {
+  fetch('comments_full.tsv').then(function(r){ return r.text(); }).then(function(t){
+    rawDataStore = t;
+    document.getElementById('fileName').style.display = 'block';
+    document.getElementById('fileName').textContent = '✅ 已加载示例数据（' + t.split('\n').length + ' 行）';
+    status('示例数据已就绪，点击"开始分析"');
+  }).catch(function(){ status('未找到示例数据文件，请手动导入CSV/TSV文件'); });
+}
+</script>
+</body>
+</html>

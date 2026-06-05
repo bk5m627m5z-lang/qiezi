@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>评论IP地域热力图</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:"Microsoft YaHei",sans-serif;background:#f0f2f5;color:#333;padding:16px}
+.container{max-width:1300px;margin:0 auto}
+h1{text-align:center;margin-bottom:6px;color:#1a1a2e;font-size:22px}
+.subtitle{text-align:center;color:#888;font-size:13px;margin-bottom:16px}
+.section{background:#fff;border-radius:10px;padding:18px;margin-bottom:16px;box-shadow:0 1px 6px rgba(0,0,0,0.06)}
+.section h2{font-size:15px;margin-bottom:8px;color:#444}
+.tip{font-size:11px;color:#999;margin-top:4px}
+textarea{width:100%;height:130px;border:1px solid #ddd;border-radius:5px;padding:10px;font-size:12px;font-family:"Microsoft YaHei",monospace;resize:vertical}
+.btn-row{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+button{padding:9px 20px;border:none;border-radius:5px;font-size:13px;cursor:pointer;font-weight:bold;transition:all .2s}
+.btn-primary{background:#4361ee;color:#fff}
+.btn-primary:hover{background:#3651d9}
+.btn-danger{background:#ef476f;color:#fff}
+.btn-danger:hover{background:#d63d62}
+#mapChart{width:100%;height:600px;margin-top:10px}
+.stats{display:flex;gap:12px;margin-bottom:12px;flex-wrap:wrap}
+.stat{padding:8px 14px;background:#f0f5ff;border-radius:6px;flex:1;min-width:90px}
+.stat .label{font-size:11px;color:#999}
+.stat .value{font-size:20px;font-weight:bold;color:#4361ee}
+.toolbar{display:flex;gap:8px;margin-bottom:10px;align-items:center;flex-wrap:wrap}
+.toolbar input{padding:6px 10px;border:1px solid #ddd;border-radius:4px;font-size:12px;width:200px}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th,td{padding:6px 9px;text-align:left;border-bottom:1px solid #f0f0f0}
+th{background:#f7f8fc;font-weight:600;position:sticky;top:0}
+th:hover{background:#eef0f8}
+tr:hover{background:#f8fbff}
+.num{text-align:right;width:60px}
+.bar-cell{width:140px}
+.bar-wrap{background:#eee;border-radius:3px;height:12px}
+.bar{background:linear-gradient(90deg,#4361ee,#7b93ff);border-radius:3px;height:100%}
+#status{padding:8px 12px;background:#fefce8;border-radius:5px;font-size:12px;color:#666;margin-top:8px;display:none}
+#status.show{display:block}
+.count{color:#999;font-size:11px;text-align:center;margin-top:8px}
+.foreign-note{font-size:12px;color:#888;margin-top:10px;padding:8px;background:#fefce8;border-radius:4px}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>评论IP地域热力分布图</h1>
+<p class="subtitle">统计评论用户的IP属地分布，颜色越深表示该地区评论数越多</p>
+
+<div class="section">
+<h2>粘贴数据</h2>
+<p class="tip">粘贴TSV数据（评论或帖子均可，需含 ip_location 列）</p>
+<textarea id="dataInput" placeholder="粘贴TSV数据..."></textarea>
+<div class="btn-row">
+<button class="btn-primary" onclick="doAnalyze()">生成热力图</button>
+<button class="btn-danger" onclick="clearAll()">清空</button>
+<button style="background:#10b981;" onclick="autoLoadTSV('comments_full.tsv')">一键加载评论数据</button>
+<button style="background:#10b981;" onclick="autoLoadTSV('posts.tsv')">一键加载帖子数据</button>
+<button class="btn-primary" id="btnExportImg" style="background:#06b6d4;display:none;" onclick="exportImage()">导出地图图片 (PNG)</button>
+<button class="btn-primary" id="btnExportHtml" style="background:#8b5cf6;display:none;" onclick="exportHtmlCode()">导出嵌入代码 (HTML)</button>
+<button class="btn-primary" id="btnExportCSV" style="background:#f59e0b;display:none;" onclick="exportCSV()">导出统计表格 (CSV)</button>
+</div>
+<div id="status"></div>
+</div>
+
+<div class="section" id="resultSection" style="display:none">
+<h2>全国热力分布</h2>
+<div class="stats" id="statsRow"></div>
+<div id="mapChart"></div>
+
+<h2 style="margin-top:16px">地域统计详情</h2>
+<div class="toolbar">
+<input type="text" id="locFilter" placeholder="搜索地区..." oninput="renderTable()">
+</div>
+<div id="tableContainer"></div>
+<div class="foreign-note" id="foreignNote" style="display:none"></div>
+</div>
+</div>
+
+<script src="js/echarts.min.js"></script>
+<script>
+// ============== 地名映射表（短名 -> ECharts 标准名） ==============
+var NAME_MAP = {
+  '北京':'北京市','上海':'上海市','天津':'天津市','重庆':'重庆市',
+  '广东':'广东省','浙江':'浙江省','江苏':'江苏省','山东':'山东省',
+  '河南':'河南省','河北':'河北省','四川':'四川省','湖北':'湖北省',
+  '湖南':'湖南省','福建':'福建省','安徽':'安徽省','江西':'江西省',
+  '辽宁':'辽宁省','吉林':'吉林省','黑龙江':'黑龙江省',
+  '陕西':'陕西省','山西':'山西省','甘肃':'甘肃省','青海':'青海省',
+  '云南':'云南省','贵州':'贵州省','海南':'海南省',
+  '台湾':'台湾省','香港':'香港特别行政区','澳门':'澳门特别行政区',
+  '中国香港':'香港特别行政区','中国澳门':'澳门特别行政区','中国台湾':'台湾省',
+  '广西':'广西壮族自治区','内蒙古':'内蒙古自治区',
+  '西藏':'西藏自治区','新疆':'新疆维吾尔自治区','宁夏':'宁夏回族自治区',
+  // 直接全名也收录
+  '北京市':'北京市','上海市':'上海市','天津市':'天津市','重庆市':'重庆市',
+  '广东省':'广东省','浙江省':'浙江省','江苏省':'江苏省','山东省':'山东省',
+  '河南省':'河南省','河北省':'河北省','四川省':'四川省','湖北省':'湖北省',
+  '湖南省':'湖南省','福建省':'福建省','安徽省':'安徽省','江西省':'江西省',
+  '辽宁省':'辽宁省','吉林省':'吉林省','黑龙江省':'黑龙江省',
+  '陕西省':'陕西省','山西省':'山西省','甘肃省':'甘肃省','青海省':'青海省',
+  '云南省':'云南省','贵州省':'贵州省','海南省':'海南省',
+  '台湾省':'台湾省','香港特别行政区':'香港特别行政区','澳门特别行政区':'澳门特别行政区',
+  '广西壮族自治区':'广西壮族自治区','内蒙古自治区':'内蒙古自治区',
+  '西藏自治区':'西藏自治区','新疆维吾尔自治区':'新疆维吾尔自治区','宁夏回族自治区':'宁夏回族自治区',
+};
+
+// 不属于中国地图的地区
+var FOREIGN_SET = new Set([
+  '美国','日本','韩国','新加坡','澳大利亚','加拿大','英国','法国','德国','意大利',
+  '西班牙','马来西亚','泰国','越南','印度','印度尼西亚','菲律宾','俄罗斯',
+  '新西兰','荷兰','瑞士','瑞典','芬兰','挪威','丹麦','奥地利','比利时',
+  '巴西','阿根廷','墨西哥','阿联酋','土耳其','南非','埃及','波兰',
+  '乌干达','爱尔兰','葡萄牙','捷克','匈牙利','罗马尼亚','克罗地亚','斯洛伐克',
+  '卢森堡','摩纳哥','冰岛','乌克兰','白俄罗斯','哈萨克斯坦','柬埔寨','缅甸',
+  '老挝','文莱','蒙古','朝鲜','尼泊尔','斯里兰卡','孟加拉','巴基斯坦',
+  '沙特','卡塔尔','科威特','阿曼','以色列','约旦','黎巴嫩','伊拉克','伊朗',
+  '摩洛哥','突尼斯','肯尼亚','尼日利亚','加纳','埃塞俄比亚','坦桑尼亚',
+  '智利','秘鲁','哥伦比亚','委内瑞拉','古巴','巴拿马','哥斯达黎加',
+]);
+
+var allData = null;
+var chartInstance = null;
+
+function status(msg) {
+  var el = document.getElementById('status');
+  el.textContent = msg;
+  el.classList.add('show');
+}
+
+// 解析TSV
+function parseData(raw) {
+  var lines = raw.split(/\r?\n/).filter(function(l) { return l.trim(); });
+  if (lines.length < 2) return { error: '数据行数不足' };
+
+  var headers = lines[0].split('\t').map(function(h) { return h.trim(); });
+  var locIdx = headers.indexOf('ip_location');
+  if (locIdx === -1) return { error: '找不到"ip_location"列' };
+
+  // 去重列
+  var idIdx = headers.indexOf('comment_id');
+  if (idIdx === -1) idIdx = headers.indexOf('note_id');
+
+  var seen = new Set();
+  var counts = {};  // { provinceName: count }
+  var foreign = {}; // { country: count }
+  var rawCounts = {}; // 记录原始短名
+  var total = 0, skipped = 0;
+
+  for (var i = 1; i < lines.length; i++) {
+    var cols = lines[i].split('\t');
+    if (cols.length <= locIdx) continue;
+
+    if (idIdx >= 0 && cols[idIdx]) {
+      var cid = cols[idIdx].trim();
+      if (seen.has(cid)) { skipped++; continue; }
+      seen.add(cid);
+    }
+
+    var loc = (cols[locIdx] || '').trim();
+    if (!loc) continue;
+
+    total++;
+
+    // 先试直接全名匹配
+    if (NAME_MAP[loc]) {
+      var fullName = NAME_MAP[loc];
+      counts[fullName] = (counts[fullName] || 0) + 1;
+      rawCounts[loc] = (rawCounts[loc] || 0) + 1;
+    } else if (FOREIGN_SET.has(loc)) {
+      foreign[loc] = (foreign[loc] || 0) + 1;
+    } else {
+      // 尝试模糊匹配（如 "广东 " -> "广东省"）
+      var matched = false;
+      var mapKeys = Object.keys(NAME_MAP);
+      for (var k = 0; k < mapKeys.length; k++) {
+        var key = mapKeys[k];
+        if (loc.indexOf(key.replace(/[省市县区自治壮族回族维吾尔]/g, '')) !== -1 ||
+            key.indexOf(loc) !== -1) {
+          var fn = NAME_MAP[key];
+          if (fn.length > 3) { // 优先长名
+            counts[fn] = (counts[fn] || 0) + 1;
+            rawCounts[loc] = (rawCounts[loc] || 0) + 1;
+            matched = true;
+            break;
+          }
+        }
+      }
+      if (!matched) {
+        foreign[loc] = (foreign[loc] || 0) + 1;
+      }
+    }
+  }
+
+  return { counts: counts, foreign: foreign, total: total, skipped: skipped, rawCounts: rawCounts };
+}
+
+// 加载地图GeoJSON并渲染
+function loadMapAndRender(counts, total) {
+  var mapEl = document.getElementById('mapChart');
+
+  // 尝试从多个CDN加载中国地图
+  var urls = [
+    'https://geo.datav.aliyun.com/areas_v3/bound/100000_full.json',
+    'https://geo.datav.aliyun.com/areas_v3/bound/geojson/china.json'
+  ];
+
+  function tryLoad(idx) {
+    if (idx >= urls.length) {
+      status('地图数据加载失败，请检查网络连接。下方仍可查看统计表格。');
+      return;
+    }
+    status('正在加载地图数据...');
+
+    fetch(urls[idx]).then(function(r) {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    }).then(function(geoJson) {
+      echarts.registerMap('china', geoJson);
+      renderChart(counts, total);
+    }).catch(function() {
+      tryLoad(idx + 1);
+    });
+  }
+
+  tryLoad(0);
+}
+
+function renderChart(counts, total) {
+  var mapEl = document.getElementById('mapChart');
+
+  // 构建数据数组，DataV GeoJSON 可能用全名也可能用短名，都加进去
+  var mapData = [];
+  var cnKeys = Object.keys(counts);
+  for (var i = 0; i < cnKeys.length; i++) {
+    var fullName = cnKeys[i];
+    var count = counts[fullName];
+    var shortName = fullName.replace(/省|市|壮族自治区|回族自治区|维吾尔自治区|自治区|特别行政区/g, '');
+    // 两个名字都放，GeoJSON 匹配到哪个用哪个，ECharts 自动合并相同 value
+    mapData.push({ name: fullName, value: count });
+    if (shortName !== fullName) {
+      mapData.push({ name: shortName, value: count });
+    }
+  }
+
+  var maxVal = 0;
+  for (var i = 0; i < mapData.length; i++) {
+    if (mapData[i].value > maxVal) maxVal = mapData[i].value;
+  }
+
+  chartInstance = echarts.init(mapEl);
+  var chart = chartInstance;
+  var option = {
+    tooltip: {
+      trigger: 'item',
+      formatter: function(p) {
+        return p.name + '<br/>评论数：<b>' + (p.value || 0) + '</b> 条';
+      }
+    },
+    visualMap: {
+      min: 0,
+      max: maxVal,
+      left: 20,
+      bottom: 20,
+      calculable: true,
+      inRange: {
+        color: ['#f0f5ff', '#bac8ff', '#748ffc', '#4361ee', '#1e3ab5']
+      },
+      text: ['高', '低'],
+      textStyle: { color: '#666', fontSize: 11 }
+    },
+    series: [{
+      name: '评论数',
+      type: 'map',
+      map: 'china',
+      roam: true,
+      zoom: 1.2,
+      top: 40,
+      label: {
+        show: true,
+        fontSize: 10,
+        color: '#555'
+      },
+      emphasis: {
+        label: { show: true, fontSize: 14, fontWeight: 'bold' },
+        itemStyle: { areaColor: '#ffd43b' }
+      },
+      itemStyle: {
+        borderColor: '#fff',
+        borderWidth: 1,
+        areaColor: '#f5f5f5'
+      },
+      data: mapData
+    }]
+  };
+
+  chart.setOption(option);
+  // 显示导出按钮
+  document.getElementById('btnExportImg').style.display = 'inline-block';
+  document.getElementById('btnExportHtml').style.display = 'inline-block';
+  document.getElementById('btnExportCSV').style.display = 'inline-block';
+  status('热力图已生成！共统计 ' + total + ' 条数据，覆盖 ' + cnKeys.length + ' 个省份。');
+
+  // 响应式
+  window.addEventListener('resize', function() { chart.resize(); });
+}
+
+// 自动从本地TSV文件加载
+function autoLoadTSV(filename) {
+  status('正在加载 ' + filename + ' ...');
+  fetch(filename).then(function(r) {
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    return r.text();
+  }).then(function(text) {
+    document.getElementById('dataInput').value = text;
+    status('数据已加载，共 ' + text.split(/\r?\n/).filter(function(l){return l.trim();}).length + ' 行。点击"生成热力图"查看。');
+  }).catch(function(e) {
+    status('加载失败：' + e.message + '。请手动粘贴数据。');
+  });
+}
+
+function doAnalyze() {
+  var raw = document.getElementById('dataInput').value.trim();
+  if (!raw) { alert('请先粘贴数据！'); return; }
+
+  status('正在解析数据...');
+  var result = parseData(raw);
+  if (result.error) { status('错误：' + result.error); return; }
+
+  var counts = result.counts;
+  var foreign = result.foreign;
+  var total = result.total;
+
+  if (Object.keys(counts).length === 0) {
+    status('未识别到中国境内的IP属地，请检查数据');
+    return;
+  }
+
+  allData = { counts: counts, foreign: foreign, total: total, rawCounts: result.rawCounts };
+
+  document.getElementById('resultSection').style.display = 'block';
+
+  // 统计
+  var cnKeys = Object.keys(counts);
+  var cnTotal = 0;
+  for (var i = 0; i < cnKeys.length; i++) { cnTotal += counts[cnKeys[i]]; }
+  var foreignTotal = 0;
+  var fk = Object.keys(foreign);
+  for (var i = 0; i < fk.length; i++) { foreignTotal += foreign[fk[i]]; }
+
+  document.getElementById('statsRow').innerHTML =
+    '<div class="stat"><div class="label">总数据量</div><div class="value">' + total + '</div></div>' +
+    '<div class="stat"><div class="label">国内省份</div><div class="value">' + cnKeys.length + '</div></div>' +
+    '<div class="stat"><div class="label">国内评论数</div><div class="value">' + cnTotal + '</div></div>' +
+    '<div class="stat"><div class="label">海外地区</div><div class="value">' + fk.length + '</div></div>' +
+    '<div class="stat"><div class="label">海外评论数</div><div class="value">' + foreignTotal + '</div></div>';
+
+  loadMapAndRender(counts, total);
+  renderTable();
+}
+
+function renderTable() {
+  var d = allData; if (!d) return;
+  var filter = (document.getElementById('locFilter').value || '').trim();
+
+  // 合并国内外数据
+  var all = [];
+  var cnKeys = Object.keys(d.counts);
+  for (var i = 0; i < cnKeys.length; i++) {
+    all.push({ name: cnKeys[i], count: d.counts[cnKeys[i]], type: '国内' });
+  }
+  var fk = Object.keys(d.foreign);
+  for (var i = 0; i < fk.length; i++) {
+    all.push({ name: fk[i], count: d.foreign[fk[i]], type: '海外' });
+  }
+
+  all.sort(function(a, b) { return b.count - a.count; });
+
+  if (filter) {
+    all = all.filter(function(item) { return item.name.indexOf(filter) !== -1; });
+  }
+
+  var maxVal = all.length > 0 ? all[0].count : 1;
+  var html = '<table><thead><tr><th class="num">#</th><th>地区</th><th>类型</th><th class="num">出现次数</th><th>可视化</th></tr></thead><tbody>';
+
+  for (var i = 0; i < all.length; i++) {
+    var item = all[i];
+    var pct = (item.count / d.total * 100).toFixed(1);
+    var bw = (item.count / maxVal * 100).toFixed(0);
+    html += '<tr><td class="num">' + (i+1) + '</td><td>' + esc(item.name) + '</td><td>' + item.type + '</td><td class="num">' + item.count + ' <span style="color:#999;font-size:10px">(' + pct + '%)</span></td><td class="bar-cell"><div class="bar-wrap"><div class="bar" style="width:' + bw + '%"></div></div></td></tr>';
+  }
+  html += '</tbody></table>';
+  document.getElementById('tableContainer').innerHTML = html;
+
+  // 海外地区列表
+  if (fk.length > 0) {
+    var fnHtml = '海外IP共 ' + fk.length + ' 个地区（未在地图上显示）：';
+    var fArr = [];
+    for (var i = 0; i < fk.length; i++) {
+      fArr.push(fk[i] + '(' + d.foreign[fk[i]] + '次)');
+    }
+    fnHtml += fArr.join('、');
+    document.getElementById('foreignNote').textContent = fnHtml;
+    document.getElementById('foreignNote').style.display = 'block';
+  }
+}
+
+function esc(s) { var d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+// 导出地图为PNG图片
+function exportImage() {
+  if (!chartInstance) { alert('请先生成热力图！'); return; }
+  var url = chartInstance.getDataURL({
+    type: 'png',
+    pixelRatio: 2,
+    backgroundColor: '#fff'
+  });
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = 'ip_heatmap.png';
+  a.click();
+  alert('地图图片已导出！可直接拖入Word或网页中使用。');
+}
+
+// 导出嵌入HTML代码
+function exportHtmlCode() {
+  if (!chartInstance) { alert('请先生成热力图！'); return; }
+  var mapEl = document.getElementById('mapChart');
+  var w = mapEl.offsetWidth;
+  var h = mapEl.offsetHeight;
+  var html = '<div id="heatmap_' + Date.now() + '" style="width:' + w + 'px;height:' + h + 'px;"></div>\n';
+  html += '<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"><\/script>\n';
+  html += '<script>\n';
+  html += 'var chart = echarts.init(document.getElementById("heatmap_' + Date.now() + '"));\n';
+  html += 'chart.setOption(' + JSON.stringify(chartInstance.getOption(), null, 2) + ');\n';
+  html += '<\/script>';
+  var blob = new Blob([html], { type:'text/html;charset=utf-8' });
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'ip_heatmap_embed.html';
+  a.click();
+  alert('嵌入代码已导出！包含地图JSON数据，可直接插入网页。');
+}
+
+// 导出统计表格为CSV
+function exportCSV() {
+  if (!allData) { alert('请先生成热力图！'); return; }
+  var csv = '地区,类型,出现次数\n';
+  var items = [];
+  var cnKeys = Object.keys(allData.counts);
+  for (var i = 0; i < cnKeys.length; i++) {
+    items.push(cnKeys[i] + ',国内,' + allData.counts[cnKeys[i]]);
+  }
+  var fk = Object.keys(allData.foreign);
+  for (var i = 0; i < fk.length; i++) {
+    items.push(fk[i] + ',海外,' + allData.foreign[fk[i]]);
+  }
+  items.sort(function(a,b) {
+    var va = parseInt(a.split(',')[2]), vb = parseInt(b.split(',')[2]);
+    return vb - va;
+  });
+  csv += items.join('\n');
+  var blob = new Blob(['﻿' + csv], { type:'text/csv;charset=utf-8' });
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'ip_heatmap_data.csv';
+  a.click();
+}
+
+function clearAll() {
+  chartInstance = null;
+  allData = null;
+  document.getElementById('btnExportImg').style.display = 'none';
+  document.getElementById('btnExportHtml').style.display = 'none';
+  document.getElementById('btnExportCSV').style.display = 'none';
+  document.getElementById('mapChart').innerHTML = '';
+  document.getElementById('tableContainer').innerHTML = '';
+  document.getElementById('statsRow').innerHTML = '';
+  document.getElementById('resultSection').style.display = 'none';
+  document.getElementById('status').classList.remove('show');
+  document.getElementById('status').textContent = '';
+  document.getElementById('foreignNote').style.display = 'none';
+  document.getElementById('foreignNote').textContent = '';
+}
+</script>
+</body>
+</html>
