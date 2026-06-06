@@ -806,6 +806,141 @@
         }
 
         /* ============================================================
+         *  海报增强玄学元素
+         * ============================================================ */
+        /* 星空层 */
+        .poster-stars {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 0; pointer-events: none;
+        }
+        .poster-star {
+            position: absolute;
+            background: #fff;
+            border-radius: 50%;
+            animation: starTwinkle 3s infinite alternate;
+        }
+        @keyframes starTwinkle {
+            0%{opacity:0.3;box-shadow:0 0 2px #fff}
+            100%{opacity:1;box-shadow:0 0 8px #c4b5fd,0 0 20px rgba(167,139,250,0.4)}
+        }
+        /* 星座连线 SVG */
+        .poster-constellations {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 1; pointer-events: none; opacity: 0.25;
+        }
+        /* 大型神圣几何环 */
+        .poster-geo-ring {
+            position: absolute; z-index: 0; pointer-events: none;
+            border-radius: 50%;
+            border: 1.5px solid rgba(167,139,250,0.12);
+            animation: geoRingSpin 40s linear infinite;
+        }
+        .poster-geo-ring:nth-child(2) { animation-duration: 55s; animation-direction: reverse; }
+        .poster-geo-ring:nth-child(3) { animation-duration: 70s; border-style: dashed; }
+        @keyframes geoRingSpin {
+            from{transform:rotate(0deg)}
+            to{transform:rotate(360deg)}
+        }
+        /* 六芒星（大卫星） */
+        .poster-hexagram {
+            position: absolute; z-index: 0; pointer-events: none;
+            opacity: 0.06;
+            font-size: clamp(200px, 40vw, 500px);
+            color: #a78bfa;
+            animation: hexagramFloat 15s ease-in-out infinite;
+        }
+        @keyframes hexagramFloat {
+            0%,100%{transform:translateY(0) rotate(0deg)}
+            33%{transform:translateY(-20px) rotate(3deg)}
+            66%{transform:translateY(10px) rotate(-3deg)}
+        }
+        /* 海报边框 */
+        .poster-frame {
+            position: absolute; top: 16px; left: 16px; right: 16px; bottom: 16px;
+            z-index: 1; pointer-events: none;
+            border: 1px solid rgba(167,139,250,0.15);
+            border-radius: 4px;
+        }
+        .poster-frame::before {
+            content: '';
+            position: absolute; top: 8px; left: 8px; right: 8px; bottom: 8px;
+            border: 1px solid rgba(167,139,250,0.08);
+            border-radius: 2px;
+        }
+        /* 四角星芒 */
+        .poster-corner {
+            position: absolute; z-index: 2; pointer-events: none;
+            color: rgba(167,139,250,0.35);
+            font-size: 24px;
+            animation: cornerGlow 4s ease-in-out infinite;
+        }
+        .poster-corner-tl{top:28px;left:28px}
+        .poster-corner-tr{top:28px;right:28px;animation-delay:1s}
+        .poster-corner-bl{bottom:28px;left:28px;animation-delay:2s}
+        .poster-corner-br{bottom:28px;right:28px;animation-delay:3s}
+        @keyframes cornerGlow {
+            0%,100%{opacity:0.2;text-shadow:0 0 4px rgba(167,139,250,0.3)}
+            50%{opacity:0.6;text-shadow:0 0 16px rgba(167,139,250,0.7)}
+        }
+        /* 月相装饰条 */
+        .poster-moon-phases {
+            position: absolute; z-index: 1; pointer-events: none;
+            display: flex; gap: 4px;
+            font-size: 14px; letter-spacing: 2px;
+            color: rgba(232,184,74,0.25);
+            bottom: 50px; left: 50%;
+            transform: translateX(-50%);
+            animation: moonFade 6s ease-in-out infinite;
+        }
+        @keyframes moonFade {
+            0%,100%{opacity:0.15}
+            50%{opacity:0.45}
+        }
+        /* 八卦符号 */
+        .poster-bagua {
+            position: absolute; z-index: 0; pointer-events: none;
+            opacity: 0.05;
+            font-size: clamp(150px, 30vw, 350px);
+            color: #e8b84a;
+            animation: baguaFloat 20s ease-in-out infinite;
+        }
+        @keyframes baguaFloat {
+            0%,100%{transform:rotate(0deg)}
+            50%{transform:rotate(5deg)}
+        }
+        /* 增强浮动标签 */
+        .hero-floating-tag {
+            font-size: 0.9rem;
+            color: rgba(212,180,254,0.55);
+            text-shadow: 0 0 12px rgba(167,139,250,0.3);
+            letter-spacing: 0.05em;
+        }
+        /* 水晶球核心光 */
+        .poster-orb {
+            position: absolute; z-index: 0; pointer-events: none;
+            width: 200px; height: 200px; border-radius: 50%;
+            background: radial-gradient(circle, rgba(167,139,250,0.15) 0%, rgba(34,211,238,0.05) 40%, transparent 70%);
+            filter: blur(30px);
+            animation: orbPulse 5s ease-in-out infinite;
+        }
+        @keyframes orbPulse {
+            0%,100%{transform:scale(1);opacity:0.5}
+            50%{transform:scale(1.3);opacity:0.9}
+        }
+        /* 移动端适配 */
+        @media (max-width: 768px) {
+            .poster-moon-phases { display: none; }
+            .poster-hexagram { font-size: 150px; }
+            .poster-bagua { font-size: 120px; }
+            .poster-frame { top: 10px; left: 10px; right: 10px; bottom: 10px; }
+            .poster-corner { font-size: 16px; }
+            .poster-corner-tl{top:18px;left:18px}
+            .poster-corner-tr{top:18px;right:18px}
+            .poster-corner-bl{bottom:18px;left:18px}
+            .poster-corner-br{bottom:18px;right:18px}
+        }
+
+        /* ============================================================
          *  入口黑屏手机
          * ============================================================ */
         .entry-phone-wrapper {
@@ -1230,6 +1365,34 @@
 
         <!-- ====== 头图海报 ====== -->
         <section class="hero-poster" id="hero">
+            <!-- 玄学背景层 -->
+            <div class="poster-bagua" style="top:5%;right:8%;">☯</div>
+            <div class="poster-hexagram" style="top:50%;left:50%;transform:translate(-50%,-50%);">✡</div>
+            <div class="poster-geo-ring" style="width:55vw;height:55vw;max-width:700px;max-height:700px;top:50%;left:50%;transform:translate(-50%,-50%);"></div>
+            <div class="poster-geo-ring" style="width:70vw;height:70vw;max-width:850px;max-height:850px;top:50%;left:50%;transform:translate(-50%,-50%);"></div>
+            <div class="poster-geo-ring" style="width:42vw;height:42vw;max-width:550px;max-height:550px;top:50%;left:50%;transform:translate(-50%,-50%);"></div>
+            <!-- 星空 -->
+            <div class="poster-stars" id="posterStars"></div>
+            <!-- 星座连线 -->
+            <svg class="poster-constellations" viewBox="0 0 100 100" preserveAspectRatio="none">
+                <line x1="15" y1="20" x2="25" y2="35" stroke="rgba(167,139,250,0.3)" stroke-width="0.3"/>
+                <line x1="25" y1="35" x2="40" y2="30" stroke="rgba(167,139,250,0.3)" stroke-width="0.3"/>
+                <line x1="75" y1="25" x2="85" y2="40" stroke="rgba(167,139,250,0.25)" stroke-width="0.3"/>
+                <line x1="85" y1="40" x2="70" y2="55" stroke="rgba(167,139,250,0.25)" stroke-width="0.3"/>
+                <line x1="20" y1="70" x2="35" y2="60" stroke="rgba(232,184,74,0.2)" stroke-width="0.3"/>
+                <line x1="35" y1="60" x2="50" y2="75" stroke="rgba(232,184,74,0.2)" stroke-width="0.3"/>
+            </svg>
+            <!-- 海报边框 -->
+            <div class="poster-frame"></div>
+            <div class="poster-corner poster-corner-tl">✦</div>
+            <div class="poster-corner poster-corner-tr">✦</div>
+            <div class="poster-corner poster-corner-bl">✦</div>
+            <div class="poster-corner poster-corner-br">✦</div>
+            <!-- 月相 -->
+            <div class="poster-moon-phases">🌑 🌒 🌓 🌔 🌕 🌖 🌗 🌘</div>
+            <!-- 核心光 -->
+            <div class="poster-orb" style="top:35%;left:50%;transform:translate(-50%,-50%);"></div>
+            <!-- 原有光晕 -->
             <div class="hero-bg-glow"></div>
             <div class="hero-bg-glow hero-bg-glow-2"></div>
             <div class="hero-content">
@@ -3381,6 +3544,28 @@
         if (p) p.classList.add("unlocked");
         if (f) f.style.opacity = '1';
     }
+    </script>
+
+    <!-- 封面星空生成 -->
+    <script>
+    (function(){
+        var container = document.getElementById('posterStars');
+        if (!container) return;
+        var frag = document.createDocumentFragment();
+        for (var i = 0; i < 80; i++) {
+            var s = document.createElement('div');
+            s.className = 'poster-star';
+            s.style.left = Math.random() * 100 + '%';
+            s.style.top = Math.random() * 100 + '%';
+            var size = Math.random() * 3 + 1;
+            s.style.width = size + 'px';
+            s.style.height = size + 'px';
+            s.style.animationDelay = Math.random() * 4 + 's';
+            s.style.animationDuration = (Math.random() * 3 + 2) + 's';
+            frag.appendChild(s);
+        }
+        container.appendChild(frag);
+    })();
     </script>
 
 </body>
