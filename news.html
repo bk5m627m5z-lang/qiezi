@@ -219,6 +219,9 @@
         #chapter0, #chapter1, #chapter2, #chapter3, #chapter4, #chapter5, #chapter6 { display: none; }
         body.phone-lit #chapter0 { display: flex; }
         body.unlocked #chapter1 { display: flex; }
+        /* 第一章装饰图随章节解锁渐入 */
+        #imgCh1Left, #imgCh1Right { opacity: 0; transition: opacity 1s ease 0.3s; }
+        body.unlocked #imgCh1Left, body.unlocked #imgCh1Right { opacity: 1; }
         body.all-shown #chapter2 { display: flex; }
         body.ch3up #chapter3 { display: flex; }
         body.mood-done #chapter4 { display: flex; }
@@ -1488,9 +1491,9 @@
             <!-- 聊天交互（手机外框）+ 装饰图 -->
             <div style="position:relative;display:flex;justify-content:center;margin-bottom:20px;">
                 <!-- 左下装饰 -->
-                <img id="imgCh1Left" src="left.jpg" style="position:absolute;left:-150px;bottom:0;width:130px;opacity:0;transition:opacity 1s ease;pointer-events:none;z-index:0;">
+                <img id="imgCh1Left" src="left.jpg" style="position:absolute;left:-150px;bottom:0;width:130px;pointer-events:none;z-index:0;">
                 <!-- 右上装饰 -->
-                <img id="imgCh1Right" src="right.jpg" style="position:absolute;right:-140px;top:0;width:120px;opacity:0;transition:opacity 1s ease;pointer-events:none;z-index:0;">
+                <img id="imgCh1Right" src="right.jpg" style="position:absolute;right:-140px;top:0;width:120px;pointer-events:none;z-index:0;">
             <div style="background:#1a1a2e;border:3px solid #2d2d4a;border-radius:28px;padding:6px;box-shadow:0 0 30px rgba(124,58,237,0.15);width:350px;height:420px;">
             <div class="chat-widget" id="chatWidget" style="margin-bottom:0;border-radius:20px;overflow:hidden;width:100%;height:100%;display:flex;flex-direction:column;">
                 <div class="chat-header">
@@ -1548,25 +1551,6 @@
 
                     msg.scrollTop = msg.scrollHeight;
                 };
-            })();
-            </script>
-
-            <!-- 第一章装饰图渐入 -->
-            <script>
-            (function(){
-                var l = document.getElementById('imgCh1Left');
-                var r = document.getElementById('imgCh1Right');
-                if (!l && !r) return;
-                var obs = new IntersectionObserver(function(entries){
-                    entries.forEach(function(en){
-                        if (en.isIntersecting) {
-                            if (l) l.style.opacity = '1';
-                            if (r) r.style.opacity = '1';
-                            obs.disconnect();
-                        }
-                    });
-                }, { threshold: 0.15 });
-                obs.observe(document.getElementById('chapter1'));
             })();
             </script>
 
