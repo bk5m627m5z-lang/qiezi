@@ -1,19 +1,2 @@
-# 操作系统文件
-.DS_Store
-Thumbs.db
-Desktop.ini
-
-# Claude Code
-.claude/
-
-# 编辑器文件
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
-
-# 临时文件
-*.tmp
-*.log
-   
+news-full.html
+deploy.zip
