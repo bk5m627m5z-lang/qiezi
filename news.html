@@ -219,9 +219,9 @@
         #chapter0, #chapter1, #chapter2, #chapter3, #chapter4, #chapter5, #chapter6 { display: none; }
         body.phone-lit #chapter0 { display: flex; }
         body.unlocked #chapter1 { display: flex; }
-        /* 第一章装饰图随章节解锁渐入 */
-        #imgCh1Left, #imgCh1Right { opacity: 0; transition: opacity 1s ease 0.3s; }
-        body.unlocked #imgCh1Left, body.unlocked #imgCh1Right { opacity: 1; }
+        /* 第0章装饰图随章节解锁渐入 */
+        #imgCh0Left, #imgCh0Right { opacity: 0; transition: opacity 1s ease 0.3s; }
+        body.phone-lit #imgCh0Left, body.phone-lit #imgCh0Right { opacity: 1; }
         body.all-shown #chapter2 { display: flex; }
         body.ch3up #chapter3 { display: flex; }
         body.mood-done #chapter4 { display: flex; }
@@ -1492,9 +1492,9 @@
             <div style="display:flex;justify-content:center;margin-bottom:20px;">
                 <div style="position:relative;width:362px;height:432px;">
                     <!-- 左下装饰 -->
-                    <img id="imgCh1Left" src="left.jpg" style="position:absolute;right:100%;bottom:0;margin-right:20px;width:130px;pointer-events:none;z-index:5;">
+                    <img id="imgCh0Left" src="left.jpg" style="position:absolute;right:100%;bottom:0;margin-right:20px;width:130px;pointer-events:none;z-index:5;">
                     <!-- 右上装饰 -->
-                    <img id="imgCh1Right" src="right.jpg" style="position:absolute;left:100%;top:0;margin-left:20px;width:120px;pointer-events:none;z-index:5;">
+                    <img id="imgCh0Right" src="right.jpg" style="position:absolute;left:100%;top:0;margin-left:20px;width:120px;pointer-events:none;z-index:5;">
             <div style="background:#1a1a2e;border:3px solid #2d2d4a;border-radius:28px;padding:6px;box-shadow:0 0 30px rgba(124,58,237,0.15);width:350px;height:420px;">
             <div class="chat-widget" id="chatWidget" style="margin-bottom:0;border-radius:20px;overflow:hidden;width:100%;height:100%;display:flex;flex-direction:column;">
                 <div class="chat-header">
