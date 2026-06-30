@@ -2,375 +2,525 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>🔮 赛博命运占卜</title>
-    <!-- 引入外部样式表 -->
-    <link rel="stylesheet" href="css/style.css">
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box;}
+        html,body{width:100%;height:100%;}
+        body{
+            font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif;
+            background:
+                radial-gradient(ellipse at 20% 20%, rgba(124,58,237,0.12) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 70%, rgba(34,211,238,0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 50%, rgba(167,139,250,0.06) 0%, transparent 60%),
+                linear-gradient(180deg, #0d0a24 0%, #0a0a1a 40%, #080618 100%);
+            color:#e0d5f0;
+            position:relative;
+        }
+        /* 星云光晕 */
+        body::before{
+            content:'';position:fixed;top:0;left:0;width:100%;height:100%;
+            background:
+                radial-gradient(ellipse at 30% 30%, rgba(168,85,247,0.08) 0%, transparent 40%),
+                radial-gradient(ellipse at 70% 60%, rgba(34,211,238,0.06) 0%, transparent 35%),
+                radial-gradient(ellipse at 50% 80%, rgba(167,139,250,0.07) 0%, transparent 45%);
+            pointer-events:none;z-index:0;
+        }
+        /* 星空 */
+        .stars{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0;}
+        .star{position:absolute;border-radius:50%;animation:twinkle 2s infinite;}
+        @keyframes twinkle{0%,100%{opacity:0.3;transform:scale(1);}50%{opacity:1;transform:scale(1.5);}}
+        /* 页面 */
+        .page{display:none;position:fixed;top:0;left:0;width:100%;height:100%;z-index:1;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:20px;overflow-y:auto;}
+        .page.active{display:flex;}
+        /* 标题 */
+        h1{font-size:28px;color:#d4a5ff;text-shadow:0 0 20px rgba(212,165,255,0.5);margin-bottom:10px;letter-spacing:4px;}
+        h2{font-size:22px;color:#c084fc;margin-bottom:20px;text-shadow:0 0 15px rgba(192,132,252,0.4);}
+        .subtitle{color:#a78bfa;font-size:14px;margin-bottom:30px;opacity:0.8;}
+        /* 水晶球 */
+        .crystal-ball-container{position:relative;width:200px;height:200px;margin:30px auto;cursor:pointer;}
+        .crystal-ball{width:160px;height:160px;background:radial-gradient(circle at 35% 35%,rgba(216,180,254,0.9) 0%,rgba(168,85,247,0.8) 30%,rgba(126,34,206,0.9) 60%,rgba(88,28,135,1) 100%);border-radius:50%;position:absolute;top:10px;left:20px;box-shadow:0 0 30px rgba(168,85,247,0.6),0 0 60px rgba(126,34,206,0.4);animation:float 3s ease-in-out infinite;overflow:hidden;}
+        .crystal-ball::before{content:'';position:absolute;top:20%;left:25%;width:30%;height:20%;background:rgba(255,255,255,0.3);border-radius:50%;filter:blur(5px);}
+        .crystal-ball::after{content:'';position:absolute;top:50%;left:50%;width:80%;height:80%;background:radial-gradient(circle,rgba(255,255,255,0.1) 0%,transparent 70%);transform:translate(-50%,-50%);animation:mist 4s ease-in-out infinite;}
+        @keyframes float{0%,100%{transform:translateY(0);}50%{transform:translateY(-15px);}}
+        @keyframes mist{0%,100%{opacity:0.3;transform:translate(-50%,-50%) scale(1);}50%{opacity:0.7;transform:translate(-50%,-50%) scale(1.2);}}
+        .crystal-stand{position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:120px;height:40px;background:linear-gradient(to bottom,#4a306d,#2d1b4e);border-radius:50% 50% 10px 10px;box-shadow:0 5px 20px rgba(0,0,0,0.5);}
+        .crystal-stand::before{content:'';position:absolute;top:-5px;left:10px;right:10px;height:10px;background:linear-gradient(to bottom,#7c3aed,#5b21b6);border-radius:50%;}
+        /* 粒子 */
+        .magic-particle{position:absolute;width:4px;height:4px;background:#d8b4fe;border-radius:50%;pointer-events:none;animation:particle-rise 2s ease-out forwards;}
+        @keyframes particle-rise{0%{opacity:1;transform:translateY(0) scale(1);}100%{opacity:0;transform:translateY(-100px) scale(0);}}
+        /* 按钮 */
+        .btn{display:inline-block;background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;border:none;padding:15px 50px;font-size:16px;border-radius:30px;cursor:pointer;margin:10px;box-shadow:0 4px 20px rgba(124,58,237,0.4);transition:all 0.3s;font-family:inherit;text-decoration:none;}
+        .btn:hover{transform:translateY(-2px);box-shadow:0 6px 30px rgba(124,58,237,0.6);}
+        .btn:active{transform:translateY(0);}
+        .btn-secondary{background:transparent;border:2px solid #7c3aed;color:#c084fc;}
+        .btn-secondary:hover{background:rgba(124,58,237,0.2);}
+        .share-btn{background:linear-gradient(135deg,#ec4899,#a855f7);margin-top:20px;}
+        /* 输入框 */
+        .input-field{background:rgba(30,20,60,0.8);border:2px solid #5b21b6;color:#e0d5f0;padding:15px 20px;font-size:16px;border-radius:15px;width:80%;max-width:300px;margin:10px 0;outline:none;transition:all 0.3s;font-family:inherit;}
+        .input-field:focus{border-color:#a855f7;box-shadow:0 0 20px rgba(168,85,247,0.3);}
+        .input-field::placeholder{color:#6b5b95;}
+        /* 选项卡片 */
+        .options-container{display:flex;flex-direction:column;gap:12px;width:100%;max-width:350px;margin:20px 0;}
+        .option-card{background:linear-gradient(135deg,rgba(30,20,60,0.9),rgba(50,30,90,0.9));border:2px solid #4c1d95;border-radius:15px;padding:18px 20px;cursor:pointer;transition:all 0.3s;text-align:left;}
+        .option-card:hover{border-color:#a855f7;transform:translateX(5px);box-shadow:0 5px 20px rgba(168,85,247,0.3);}
+        .option-card.selected{border-color:#d8b4fe;background:linear-gradient(135deg,rgba(60,30,100,0.9),rgba(80,40,130,0.9));box-shadow:0 0 25px rgba(216,180,254,0.4);}
+        .option-card .emoji{font-size:24px;margin-right:10px;vertical-align:middle;}
+        .option-card .text{font-size:15px;color:#ddd6fe;}
+        /* 塔罗牌 */
+        .tarot-container{display:flex;justify-content:center;gap:15px;margin:30px 0;flex-wrap:wrap;}
+        .tarot-card{width:100px;height:160px;background:linear-gradient(135deg,#2d1b4e,#1e1b4b);border:2px solid #6b21a8;border-radius:10px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all 0.4s;position:relative;box-shadow:0 5px 15px rgba(0,0,0,0.4);}
+        .tarot-card::before{content:'✦';font-size:30px;color:#7c3aed;opacity:0.5;}
+        .tarot-card:hover{transform:translateY(-10px);border-color:#d8b4fe;box-shadow:0 10px 30px rgba(168,85,247,0.5);}
+        .tarot-card.flipped{background:linear-gradient(135deg,#4c1d95,#6b21a8);border-color:#d8b4fe;}
+        .tarot-card.flipped::before{display:none;}
+        .tarot-card .card-content{display:none;flex-direction:column;align-items:center;padding:10px;}
+        .tarot-card.flipped .card-content{display:flex;}
+        .tarot-card .card-emoji{font-size:36px;margin-bottom:5px;}
+        .tarot-card .card-name{font-size:12px;color:#e9d5ff;text-align:center;}
+        /* 进度条 */
+        .progress-container{width:80%;max-width:300px;height:8px;background:rgba(30,20,60,0.8);border-radius:4px;margin:20px auto;overflow:hidden;border:1px solid #4c1d95;}
+        .progress-bar{height:100%;background:linear-gradient(90deg,#7c3aed,#d8b4fe);border-radius:4px;transition:width 0.5s ease;}
+        /* 结果卡片 */
+        .result-card{background:linear-gradient(135deg,rgba(30,20,60,0.95),rgba(50,30,90,0.95));border:2px solid #7c3aed;border-radius:20px;padding:30px;max-width:350px;width:90%;margin:20px auto;box-shadow:0 10px 40px rgba(124,58,237,0.3);position:relative;overflow:hidden;}
+        .result-card::before{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:radial-gradient(circle,rgba(168,85,247,0.1) 0%,transparent 70%);animation:rotate 10s linear infinite;}
+        @keyframes rotate{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
+        .result-title{font-size:20px;color:#d8b4fe;margin-bottom:15px;position:relative;z-index:1;}
+        .result-content{color:#c4b5fd;line-height:1.8;font-size:14px;position:relative;z-index:1;}
+        .result-stars{font-size:24px;margin:15px 0;position:relative;z-index:1;}
+        /* 运势条 */
+        .fortune-bar{margin:15px 0;text-align:left;position:relative;z-index:1;}
+        .fortune-label{display:flex;justify-content:space-between;margin-bottom:5px;font-size:13px;color:#a78bfa;}
+        .fortune-track{height:10px;background:rgba(30,20,60,0.8);border-radius:5px;overflow:hidden;border:1px solid #4c1d95;}
+        .fortune-fill{height:100%;border-radius:5px;transition:width 1.5s ease;}
+        .fortune-love{background:linear-gradient(90deg,#ec4899,#f472b6);}
+        .fortune-career{background:linear-gradient(90deg,#3b82f6,#60a5fa);}
+        .fortune-wealth{background:linear-gradient(90deg,#f59e0b,#fbbf24);}
+        .fortune-health{background:linear-gradient(90deg,#10b981,#34d399);}
+        /* 加载 */
+        .loading{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(10,10,26,0.95);z-index:100;flex-direction:column;align-items:center;justify-content:center;}
+        .loading.active{display:flex;}
+        .loading-text{color:#d8b4fe;font-size:18px;margin-top:20px;animation:pulse 1.5s infinite;}
+        @keyframes pulse{0%,100%{opacity:0.5;}50%{opacity:1;}}
+        .spinner{width:60px;height:60px;border:3px solid rgba(124,58,237,0.3);border-top-color:#d8b4fe;border-radius:50%;animation:spin 1s linear infinite;}
+        @keyframes spin{to{transform:rotate(360deg);}}
+        /* 星座 */
+        .zodiac-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;max-width:320px;margin:20px auto;}
+        .zodiac-item{background:rgba(30,20,60,0.8);border:2px solid #4c1d95;border-radius:15px;padding:15px 5px;cursor:pointer;transition:all 0.3s;text-align:center;}
+        .zodiac-item:hover,.zodiac-item.selected{border-color:#a855f7;background:rgba(60,30,100,0.9);transform:scale(1.05);box-shadow:0 5px 20px rgba(168,85,247,0.3);}
+        .zodiac-item .zodiac-emoji{font-size:28px;display:block;margin-bottom:5px;}
+        .zodiac-item .zodiac-name{font-size:12px;color:#c4b5fd;}
+        /* 符文 */
+        .rune-container{display:flex;justify-content:center;gap:20px;margin:30px 0;}
+        .rune{width:60px;height:60px;background:rgba(30,20,60,0.9);border:2px solid #6b21a8;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:28px;cursor:pointer;transition:all 0.3s;color:#a78bfa;}
+        .rune:hover{border-color:#d8b4fe;box-shadow:0 0 20px rgba(216,180,254,0.4);transform:scale(1.1);}
+        .rune.selected{background:rgba(124,58,237,0.3);border-color:#d8b4fe;color:#fff;}
+        /* 装饰 */
+        .decoration{position:absolute;font-size:20px;opacity:0.3;animation:float-decoration 4s ease-in-out infinite;pointer-events:none;}
+        @keyframes float-decoration{0%,100%{transform:translateY(0) rotate(0deg);}50%{transform:translateY(-20px) rotate(10deg);}}
+    </style>
 </head>
 <body>
 
-    <!-- ==================== 星空背景 ==================== -->
     <div class="stars" id="stars"></div>
 
-    <!-- ==================== 加载遮罩层 ==================== -->
     <div class="loading" id="loading">
         <div class="spinner"></div>
         <div class="loading-text" id="loadingText">正在连接神秘力量...</div>
     </div>
 
-    <!-- ==================== 第1页：欢迎页 ==================== -->
+    <!-- ====== 第1页：欢迎页 ====== -->
     <div class="page active" id="page1">
-        <div class="decoration" style="top: 10%; left: 10%;">✨</div>
-        <div class="decoration" style="top: 20%; right: 15%; animation-delay: 1s;">🌙</div>
-        <div class="decoration" style="bottom: 20%; left: 20%; animation-delay: 2s;">⭐</div>
-
+        <div class="decoration" style="top:10%;left:10%;">✨</div>
+        <div class="decoration" style="top:20%;right:15%;animation-delay:1s;">🌙</div>
+        <div class="decoration" style="bottom:20%;left:20%;animation-delay:2s;">⭐</div>
         <h1>🔮 赛博命运占卜</h1>
         <p class="subtitle">探索你的命运密码，揭开未来的面纱</p>
-
-        <!-- 水晶球交互区域 -->
         <div class="crystal-ball-container" onclick="createParticles(event)">
             <div class="crystal-ball"></div>
             <div class="crystal-stand"></div>
         </div>
-
-        <p style="color: #a78bfa; margin: 20px 0; font-size: 14px;">点击水晶球感受神秘能量</p>
-
+        <p style="color:#a78bfa;margin:20px 0;font-size:14px;">点击水晶球感受神秘能量</p>
         <button class="btn" onclick="goToPage(2)">开始占卜之旅</button>
     </div>
 
-    <!-- ==================== 第2页：输入姓名 ==================== -->
+    <!-- ====== 第2页：生成昵称 ====== -->
     <div class="page" id="page2">
-        <h2>告诉我你的名字</h2>
-        <p class="subtitle">让星辰记住你的气息</p>
-
-        <div style="font-size: 50px; margin: 20px 0;">🌟</div>
-
-        <input type="text" class="input-field" id="userName" placeholder="输入你的名字..." maxlength="10">
-
+        <h2>生成你的命运昵称</h2>
+        <p class="subtitle">让星辰为你赋予一个神秘代号</p>
+        <div style="font-size:50px;margin:20px 0;">🌟</div>
+        <div id="nicknameDisplay2" style="background:rgba(30,20,60,0.8);border:1px solid #6b21a8;border-radius:12px;padding:14px 20px;color:#d8b4fe;font-size:18px;text-align:center;min-height:48px;line-height:20px;margin-bottom:16px;cursor:default;user-select:none;">迷茫的打工人_001</div>
+        <button class="btn btn-secondary" onclick="generateNickname2()" style="margin-bottom:12px;">🎲 换一个</button>
         <button class="btn" onclick="saveName()">继续</button>
         <button class="btn btn-secondary" onclick="goToPage(1)">返回</button>
     </div>
 
-    <!-- ==================== 第3页：选择星座 ==================== -->
+    <!-- ====== 第3页：选择星座 ====== -->
     <div class="page" id="page3">
         <h2>选择你的星座</h2>
         <p class="subtitle">星辰会指引你的命运</p>
-
         <div class="zodiac-grid" id="zodiacGrid">
-            <div class="zodiac-item" onclick="selectZodiac(this, '白羊座', '♈')">
-                <span class="zodiac-emoji">♈</span>
-                <span class="zodiac-name">白羊座</span>
-            </div>
-            <div class="zodiac-item" onclick="selectZodiac(this, '金牛座', '♉')">
-                <span class="zodiac-emoji">♉</span>
-                <span class="zodiac-name">金牛座</span>
-            </div>
-            <div class="zodiac-item" onclick="selectZodiac(this, '双子座', '♊')">
-                <span class="zodiac-emoji">♊</span>
-                <span class="zodiac-name">双子座</span>
-            </div>
-            <div class="zodiac-item" onclick="selectZodiac(this, '巨蟹座', '♋')">
-                <span class="zodiac-emoji">♋</span>
-                <span class="zodiac-name">巨蟹座</span>
-            </div>
-            <div class="zodiac-item" onclick="selectZodiac(this, '狮子座', '♌')">
-                <span class="zodiac-emoji">♌</span>
-                <span class="zodiac-name">狮子座</span>
-            </div>
-            <div class="zodiac-item" onclick="selectZodiac(this, '处女座', '♍')">
-                <span class="zodiac-emoji">♍</span>
-                <span class="zodiac-name">处女座</span>
-            </div>
-            <div class="zodiac-item" onclick="selectZodiac(this, '天秤座', '♎')">
-                <span class="zodiac-emoji">♎</span>
-                <span class="zodiac-name">天秤座</span>
-            </div>
-            <div class="zodiac-item" onclick="selectZodiac(this, '天蝎座', '♏')">
-                <span class="zodiac-emoji">♏</span>
-                <span class="zodiac-name">天蝎座</span>
-            </div>
-            <div class="zodiac-item" onclick="selectZodiac(this, '射手座', '♐')">
-                <span class="zodiac-emoji">♐</span>
-                <span class="zodiac-name">射手座</span>
-            </div>
-            <div class="zodiac-item" onclick="selectZodiac(this, '摩羯座', '♑')">
-                <span class="zodiac-emoji">♑</span>
-                <span class="zodiac-name">摩羯座</span>
-            </div>
-            <div class="zodiac-item" onclick="selectZodiac(this, '水瓶座', '♒')">
-                <span class="zodiac-emoji">♒</span>
-                <span class="zodiac-name">水瓶座</span>
-            </div>
-            <div class="zodiac-item" onclick="selectZodiac(this, '双鱼座', '♓')">
-                <span class="zodiac-emoji">♓</span>
-                <span class="zodiac-name">双鱼座</span>
-            </div>
+            <div class="zodiac-item" onclick="selectZodiac(this,'白羊座','♈')"><span class="zodiac-emoji">♈</span><span class="zodiac-name">白羊座</span></div>
+            <div class="zodiac-item" onclick="selectZodiac(this,'金牛座','♉')"><span class="zodiac-emoji">♉</span><span class="zodiac-name">金牛座</span></div>
+            <div class="zodiac-item" onclick="selectZodiac(this,'双子座','♊')"><span class="zodiac-emoji">♊</span><span class="zodiac-name">双子座</span></div>
+            <div class="zodiac-item" onclick="selectZodiac(this,'巨蟹座','♋')"><span class="zodiac-emoji">♋</span><span class="zodiac-name">巨蟹座</span></div>
+            <div class="zodiac-item" onclick="selectZodiac(this,'狮子座','♌')"><span class="zodiac-emoji">♌</span><span class="zodiac-name">狮子座</span></div>
+            <div class="zodiac-item" onclick="selectZodiac(this,'处女座','♍')"><span class="zodiac-emoji">♍</span><span class="zodiac-name">处女座</span></div>
+            <div class="zodiac-item" onclick="selectZodiac(this,'天秤座','♎')"><span class="zodiac-emoji">♎</span><span class="zodiac-name">天秤座</span></div>
+            <div class="zodiac-item" onclick="selectZodiac(this,'天蝎座','♏')"><span class="zodiac-emoji">♏</span><span class="zodiac-name">天蝎座</span></div>
+            <div class="zodiac-item" onclick="selectZodiac(this,'射手座','♐')"><span class="zodiac-emoji">♐</span><span class="zodiac-name">射手座</span></div>
+            <div class="zodiac-item" onclick="selectZodiac(this,'摩羯座','♑')"><span class="zodiac-emoji">♑</span><span class="zodiac-name">摩羯座</span></div>
+            <div class="zodiac-item" onclick="selectZodiac(this,'水瓶座','♒')"><span class="zodiac-emoji">♒</span><span class="zodiac-name">水瓶座</span></div>
+            <div class="zodiac-item" onclick="selectZodiac(this,'双鱼座','♓')"><span class="zodiac-emoji">♓</span><span class="zodiac-name">双鱼座</span></div>
         </div>
-
         <button class="btn" onclick="confirmZodiac()">确认选择</button>
     </div>
 
-    <!-- ==================== 第4页：性格测试 Q1 ==================== -->
+    <!-- ====== 第4页：性格测试 Q1 ====== -->
     <div class="page" id="page4">
-        <div class="progress-container">
-            <div class="progress-bar" style="width: 25%"></div>
-        </div>
+        <div class="progress-container"><div class="progress-bar" style="width:25%"></div></div>
         <h2>问题 1/4</h2>
         <p class="subtitle">深夜独自走在小路上，你看到了...</p>
-
         <div class="options-container">
-            <div class="option-card" onclick="selectOption(this, 'A')">
-                <span class="emoji">🌙</span>
-                <span class="text">一轮散发着紫色光芒的神秘月亮</span>
-            </div>
-            <div class="option-card" onclick="selectOption(this, 'B')">
-                <span class="emoji">🦉</span>
-                <span class="text">一只会说话的紫色猫头鹰</span>
-            </div>
-            <div class="option-card" onclick="selectOption(this, 'C')">
-                <span class="emoji">🚪</span>
-                <span class="text">一扇散发着紫光的未知之门</span>
-            </div>
-            <div class="option-card" onclick="selectOption(this, 'D')">
-                <span class="emoji">💎</span>
-                <span class="text">地上闪烁着紫色光芒的水晶碎片</span>
-            </div>
+            <div class="option-card" onclick="selectOption(this,'A')"><span class="emoji">🌙</span><span class="text">一轮散发着紫色光芒的神秘月亮</span></div>
+            <div class="option-card" onclick="selectOption(this,'B')"><span class="emoji">🦉</span><span class="text">一只会说话的紫色猫头鹰</span></div>
+            <div class="option-card" onclick="selectOption(this,'C')"><span class="emoji">🚪</span><span class="text">一扇散发着紫光的未知之门</span></div>
+            <div class="option-card" onclick="selectOption(this,'D')"><span class="emoji">💎</span><span class="text">地上闪烁着紫色光芒的水晶碎片</span></div>
         </div>
-
         <button class="btn" onclick="nextQuestion(5)">下一题</button>
     </div>
 
-    <!-- ==================== 第5页：性格测试 Q2 ==================== -->
+    <!-- ====== 第5页：性格测试 Q2 ====== -->
     <div class="page" id="page5">
-        <div class="progress-container">
-            <div class="progress-bar" style="width: 50%"></div>
-        </div>
+        <div class="progress-container"><div class="progress-bar" style="width:50%"></div></div>
         <h2>问题 2/4</h2>
         <p class="subtitle">如果你拥有一种魔法能力，你希望是...</p>
-
         <div class="options-container">
-            <div class="option-card" onclick="selectOption(this, 'A')">
-                <span class="emoji">🔮</span>
-                <span class="text">预知未来的水晶球透视能力</span>
-            </div>
-            <div class="option-card" onclick="selectOption(this, 'B')">
-                <span class="emoji">✨</span>
-                <span class="text">操控星辰与命运的神秘力量</span>
-            </div>
-            <div class="option-card" onclick="selectOption(this, 'C')">
-                <span class="emoji">🌌</span>
-                <span class="text">穿越时空探索不同维度</span>
-            </div>
-            <div class="option-card" onclick="selectOption(this, 'D')">
-                <span class="emoji">💜</span>
-                <span class="text">感知他人内心深处的情感</span>
-            </div>
+            <div class="option-card" onclick="selectOption(this,'A')"><span class="emoji">🔮</span><span class="text">预知未来的水晶球透视能力</span></div>
+            <div class="option-card" onclick="selectOption(this,'B')"><span class="emoji">✨</span><span class="text">操控星辰与命运的神秘力量</span></div>
+            <div class="option-card" onclick="selectOption(this,'C')"><span class="emoji">🌌</span><span class="text">穿越时空探索不同维度</span></div>
+            <div class="option-card" onclick="selectOption(this,'D')"><span class="emoji">💜</span><span class="text">感知他人内心深处的情感</span></div>
         </div>
-
         <button class="btn" onclick="nextQuestion(6)">下一题</button>
     </div>
 
-    <!-- ==================== 第6页：性格测试 Q3 ==================== -->
+    <!-- ====== 第6页：性格测试 Q3 ====== -->
     <div class="page" id="page6">
-        <div class="progress-container">
-            <div class="progress-bar" style="width: 75%"></div>
-        </div>
+        <div class="progress-container"><div class="progress-bar" style="width:75%"></div></div>
         <h2>问题 3/4</h2>
-        <p class="subtitle">在神秘的魔法商店里，你会首先被什么吸引？</p>
-
+        <p class="subtitle">在聚会中，你通常会...</p>
         <div class="options-container">
-            <div class="option-card" onclick="selectOption(this, 'A')">
-                <span class="emoji">📜</span>
-                <span class="text">古老的紫色魔法卷轴</span>
-            </div>
-            <div class="option-card" onclick="selectOption(this, 'B')">
-                <span class="emoji">🧪</span>
-                <span class="text">冒着紫色烟雾的神秘药水</span>
-            </div>
-            <div class="option-card" onclick="selectOption(this, 'C')">
-                <span class="emoji">🔑</span>
-                <span class="text">一把刻有紫色符文的钥匙</span>
-            </div>
-            <div class="option-card" onclick="selectOption(this, 'D')">
-                <span class="emoji">🪞</span>
-                <span class="text">一面边缘镶嵌紫水晶的魔镜</span>
-            </div>
+            <div class="option-card" onclick="selectOption(this,'A')"><span class="emoji">🤫</span><span class="text">安静观察每个人的行为举止</span></div>
+            <div class="option-card" onclick="selectOption(this,'B')"><span class="emoji">🎤</span><span class="text">成为全场的焦点和话题中心</span></div>
+            <div class="option-card" onclick="selectOption(this,'C')"><span class="emoji">🎭</span><span class="text">和不同圈子的人自由切换交流</span></div>
+            <div class="option-card" onclick="selectOption(this,'D')"><span class="emoji">🤝</span><span class="text">专注陪伴最好的那两三个朋友</span></div>
         </div>
-
         <button class="btn" onclick="nextQuestion(7)">下一题</button>
     </div>
 
-    <!-- ==================== 第7页：性格测试 Q4 ==================== -->
+    <!-- ====== 第7页：性格测试 Q4 ====== -->
     <div class="page" id="page7">
-        <div class="progress-container">
-            <div class="progress-bar" style="width: 100%"></div>
-        </div>
+        <div class="progress-container"><div class="progress-bar" style="width:100%"></div></div>
         <h2>问题 4/4</h2>
-        <p class="subtitle">当你感到迷茫时，你会...</p>
-
+        <p class="subtitle">面对人生重大抉择时，你更倾向于...</p>
         <div class="options-container">
-            <div class="option-card" onclick="selectOption(this, 'A')">
-                <span class="emoji">🧘</span>
-                <span class="text">在紫色月光下冥想寻找答案</span>
-            </div>
-            <div class="option-card" onclick="selectOption(this, 'B')">
-                <span class="emoji">📖</span>
-                <span class="text">翻阅古老的占星书籍</span>
-            </div>
-            <div class="option-card" onclick="selectOption(this, 'C')">
-                <span class="emoji">🌟</span>
-                <span class="text">仰望星空等待命运指引</span>
-            </div>
-            <div class="option-card" onclick="selectOption(this, 'D')">
-                <span class="emoji">💫</span>
-                <span class="text">跟随直觉踏上未知的旅程</span>
-            </div>
+            <div class="option-card" onclick="selectOption(this,'A')"><span class="emoji">🧘</span><span class="text">独自冥想，听从内心直觉的声音</span></div>
+            <div class="option-card" onclick="selectOption(this,'B')"><span class="emoji">📊</span><span class="text">理性分析利弊，制定详细计划</span></div>
+            <div class="option-card" onclick="selectOption(this,'C')"><span class="emoji">🎲</span><span class="text">勇于冒险尝试新可能，不怕失败</span></div>
+            <div class="option-card" onclick="selectOption(this,'D')"><span class="emoji">👥</span><span class="text">广泛征求身边朋友和家人的建议</span></div>
         </div>
-
-        <button class="btn" onclick="finishPersonality()">查看结果</button>
+        <button class="btn" onclick="finishPersonality()">查看塔罗运势</button>
     </div>
 
-    <!-- ==================== 第8页：塔罗牌选择 ==================== -->
+    <!-- ====== 第8页：塔罗牌 ====== -->
     <div class="page" id="page8">
-        <h2>抽取你的命运塔罗牌</h2>
-        <p class="subtitle">选择一张与你产生共鸣的牌</p>
-
-        <div class="tarot-container" id="tarotContainer">
-            <div class="tarot-card" onclick="flipCard(this, '恋人', '💕', '爱情运势')">
-                <div class="card-content">
-                    <span class="card-emoji">💕</span>
-                    <span class="card-name">恋人</span>
-                </div>
-            </div>
-            <div class="tarot-card" onclick="flipCard(this, '星辰', '⭐', '事业运势')">
-                <div class="card-content">
-                    <span class="card-emoji">⭐</span>
-                    <span class="card-name">星辰</span>
-                </div>
-            </div>
-            <div class="tarot-card" onclick="flipCard(this, '月亮', '🌙', '财富运势')">
-                <div class="card-content">
-                    <span class="card-emoji">🌙</span>
-                    <span class="card-name">月亮</span>
-                </div>
-            </div>
-            <div class="tarot-card" onclick="flipCard(this, '太阳', '☀️', '健康运势')">
-                <div class="card-content">
-                    <span class="card-emoji">☀️</span>
-                    <span class="card-name">太阳</span>
-                </div>
-            </div>
-            <div class="tarot-card" onclick="flipCard(this, '命运之轮', '☸️', '综合运势')">
-                <div class="card-content">
-                    <span class="card-emoji">☸️</span>
-                    <span class="card-name">命运之轮</span>
-                </div>
-            </div>
+        <h2>🃏 翻一张塔罗牌</h2>
+        <p class="subtitle">牌面将揭示你的近期运势</p>
+        <div class="tarot-container">
+            <div class="tarot-card" onclick="flipCard(this,'恋人','💕','love')"><div class="card-content"><span class="card-emoji">💕</span><span class="card-name">恋人</span></div></div>
+            <div class="tarot-card" onclick="flipCard(this,'星辰','⭐','career')"><div class="card-content"><span class="card-emoji">⭐</span><span class="card-name">星辰</span></div></div>
+            <div class="tarot-card" onclick="flipCard(this,'月亮','🌙','wealth')"><div class="card-content"><span class="card-emoji">🌙</span><span class="card-name">月亮</span></div></div>
+            <div class="tarot-card" onclick="flipCard(this,'太阳','☀️','health')"><div class="card-content"><span class="card-emoji">☀️</span><span class="card-name">太阳</span></div></div>
+            <div class="tarot-card" onclick="flipCard(this,'命运之轮','🎡','all')"><div class="card-content"><span class="card-emoji">🎡</span><span class="card-name">命运之轮</span></div></div>
         </div>
-
-        <p id="tarotHint" style="color: #a78bfa; margin: 15px 0;">点击任意一张牌揭开命运</p>
-        <button class="btn" id="tarotBtn" onclick="goToPage(9)" style="display:none;">查看完整运势</button>
+        <p style="color:#a78bfa;font-size:13px;margin:10px 0;" id="tarotHint">点击任意一张牌揭开命运</p>
+        <button class="btn" id="tarotBtn" style="display:none;" onclick="goToPage(9)">选择守护符文</button>
     </div>
 
-    <!-- ==================== 第9页：符文选择 ==================== -->
+    <!-- ====== 第9页：符文 ====== -->
     <div class="page" id="page9">
-        <h2>选择你的守护符文</h2>
+        <h2>ᛟ 选择一个守护符文</h2>
         <p class="subtitle">符文将揭示你隐藏的命运密码</p>
-
         <div class="rune-container" id="runeContainer">
-            <div class="rune" onclick="selectRune(this, 'ᚠ')">ᚠ</div>
-            <div class="rune" onclick="selectRune(this, 'ᚢ')">ᚢ</div>
-            <div class="rune" onclick="selectRune(this, 'ᚦ')">ᚦ</div>
-            <div class="rune" onclick="selectRune(this, 'ᚨ')">ᚨ</div>
-            <div class="rune" onclick="selectRune(this, 'ᚱ')">ᚱ</div>
+            <div class="rune" onclick="selectRune(this,'ᚠ')">ᚠ</div>
+            <div class="rune" onclick="selectRune(this,'ᚢ')">ᚢ</div>
+            <div class="rune" onclick="selectRune(this,'ᚦ')">ᚦ</div>
+            <div class="rune" onclick="selectRune(this,'ᚨ')">ᚨ</div>
+            <div class="rune" onclick="selectRune(this,'ᚱ')">ᚱ</div>
         </div>
-
-        <!-- 符文含义提示区（选择后才显示） -->
-        <div id="runeMeaning" style="margin: 20px 0; padding: 20px; background: rgba(30,20,60,0.8); border-radius: 15px; border: 1px solid #6b21a8; display: none; max-width: 300px;">
-            <p style="color: #d8b4fe; font-size: 18px; margin-bottom: 10px;" id="runeTitle"></p>
-            <p style="color: #a78bfa; font-size: 14px; line-height: 1.6;" id="runeDesc"></p>
+        <div id="runeMeaning" style="margin:20px 0;padding:20px;background:rgba(30,20,60,0.8);border-radius:15px;border:1px solid #6b21a8;display:none;max-width:300px;">
+            <p style="color:#d8b4fe;font-size:18px;margin-bottom:10px;" id="runeTitle"></p>
+            <p style="color:#a78bfa;font-size:14px;line-height:1.6;" id="runeDesc"></p>
         </div>
-
         <button class="btn" onclick="goToPage(10)">查看最终占卜结果</button>
     </div>
 
-    <!-- ==================== 第10页：最终结果 ==================== -->
+    <!-- ====== 第10页：最终结果 ====== -->
     <div class="page" id="page10">
         <h2>✨ 你的命运占卜书 ✨</h2>
         <p class="subtitle" id="resultSubtitle"></p>
-
         <div class="result-card">
-            <!-- 性格类型 -->
             <div class="result-title" id="personalityTitle"></div>
             <div class="result-content" id="personalityContent"></div>
-
-            <!-- 运势指数 -->
-            <div style="margin: 20px 0; border-top: 1px solid #4c1d95; padding-top: 20px;">
+            <div style="margin:20px 0;border-top:1px solid #4c1d95;padding-top:20px;">
                 <div class="result-title">🔮 运势指数</div>
-
-                <div class="fortune-bar">
-                    <div class="fortune-label">
-                        <span>💕 爱情运</span>
-                        <span id="loveScore">85%</span>
-                    </div>
-                    <div class="fortune-track">
-                        <div class="fortune-fill fortune-love" id="loveBar" style="width: 0%"></div>
-                    </div>
-                </div>
-
-                <div class="fortune-bar">
-                    <div class="fortune-label">
-                        <span>💼 事业运</span>
-                        <span id="careerScore">72%</span>
-                    </div>
-                    <div class="fortune-track">
-                        <div class="fortune-fill fortune-career" id="careerBar" style="width: 0%"></div>
-                    </div>
-                </div>
-
-                <div class="fortune-bar">
-                    <div class="fortune-label">
-                        <span>💰 财富运</span>
-                        <span id="wealthScore">90%</span>
-                    </div>
-                    <div class="fortune-track">
-                        <div class="fortune-fill fortune-wealth" id="wealthBar" style="width: 0%"></div>
-                    </div>
-                </div>
-
-                <div class="fortune-bar">
-                    <div class="fortune-label">
-                        <span>🌟 健康运</span>
-                        <span id="healthScore">78%</span>
-                    </div>
-                    <div class="fortune-track">
-                        <div class="fortune-fill fortune-health" id="healthBar" style="width: 0%"></div>
-                    </div>
-                </div>
+                <div class="fortune-bar"><div class="fortune-label"><span>💕 爱情运</span><span id="loveScore">85%</span></div><div class="fortune-track"><div class="fortune-fill fortune-love" id="loveBar" style="width:0%"></div></div></div>
+                <div class="fortune-bar"><div class="fortune-label"><span>💼 事业运</span><span id="careerScore">72%</span></div><div class="fortune-track"><div class="fortune-fill fortune-career" id="careerBar" style="width:0%"></div></div></div>
+                <div class="fortune-bar"><div class="fortune-label"><span>💰 财富运</span><span id="wealthScore">90%</span></div><div class="fortune-track"><div class="fortune-fill fortune-wealth" id="wealthBar" style="width:0%"></div></div></div>
+                <div class="fortune-bar"><div class="fortune-label"><span>🌟 健康运</span><span id="healthScore">78%</span></div><div class="fortune-track"><div class="fortune-fill fortune-health" id="healthBar" style="width:0%"></div></div></div>
             </div>
-
-            <!-- 塔罗牌解读 -->
-            <div style="margin-top: 20px; border-top: 1px solid #4c1d95; padding-top: 20px;">
+            <div style="margin-top:20px;border-top:1px solid #4c1d95;padding-top:20px;">
                 <div class="result-title" id="tarotTitle"></div>
                 <div class="result-content" id="tarotResult"></div>
             </div>
-
-            <!-- 符文解读 -->
-            <div style="margin-top: 20px; border-top: 1px solid #4c1d95; padding-top: 20px;">
+            <div style="margin-top:20px;border-top:1px solid #4c1d95;padding-top:20px;">
                 <div class="result-title" id="runeResultTitle"></div>
                 <div class="result-content" id="runeResult"></div>
             </div>
-
-            <!-- 幸运信息 -->
             <div class="result-stars" id="luckyStars"></div>
             <div class="result-content" id="luckyInfo"></div>
         </div>
-
         <button class="btn share-btn" onclick="shareResult()">📤 分享我的运势</button>
         <button class="btn btn-secondary" onclick="restart()">🔄 重新占卜</button>
     </div>
 
-    <!-- 引入外部 JavaScript -->
-    <script src="js/app.js"></script>
+    <script>
+    // ====== 全局状态 ======
+    var userData = { name:'', zodiac:'', zodiacEmoji:'', answers:[], tarotCard:null, rune:null };
+    var currentSelection = null;
+
+    // ====== 页面导航 ======
+    function goToPage(n) {
+        var pages = document.querySelectorAll('.page');
+        for (var i = 0; i < pages.length; i++) { pages[i].classList.remove('active'); }
+        var t = document.getElementById('page' + n);
+        if (t) { t.classList.add('active'); t.scrollTop = 0; }
+        if (n === 10) {
+            setTimeout(function() {
+                showFinalResult();
+                // 内容填充后再滚回顶部，确保标题可见
+                setTimeout(function() { if (t) t.scrollTop = 0; }, 100);
+            }, 100);
+        }
+    }
+
+    // ====== 昵称 ======
+    var nickPre = ['迷茫的','求offer的','失眠的','内卷的','躺平的','焦虑的','搬砖的','摸鱼的','佛系的','emo的'];
+    var nickSuf = ['打工人','毕业生','小透明','社畜','螺丝钉','追梦人','熬夜冠军','外卖品鉴师','PPT纺织工','KPI幸存者'];
+    var nickNum = ['001','007','996','233','404','520','888','666','1314','0420'];
+    function rpick(a) { return a[Math.floor(Math.random() * a.length)]; }
+    function generateNickname2() {
+        var d = document.getElementById('nicknameDisplay2');
+        if (!d) return;
+        d.textContent = rpick(nickPre) + rpick(nickSuf) + '_' + rpick(nickNum);
+    }
+    function saveName() {
+        var d = document.getElementById('nicknameDisplay2');
+        var n = d ? d.textContent.trim() : '';
+        if (!n) { alert('请先生成昵称'); return; }
+        userData.name = n;
+        goToPage(3);
+    }
+
+    // ====== 星座 ======
+    function selectZodiac(el, name, emoji) {
+        var items = document.querySelectorAll('.zodiac-item');
+        for (var i = 0; i < items.length; i++) { items[i].classList.remove('selected'); }
+        el.classList.add('selected');
+        userData.zodiac = name;
+        userData.zodiacEmoji = emoji;
+    }
+    function confirmZodiac() {
+        if (!userData.zodiac) { alert('请先选择一个星座！'); return; }
+        goToPage(4);
+    }
+
+    // ====== 答题 ======
+    function selectOption(el, v) {
+        var p = el.parentElement;
+        var cards = p.querySelectorAll('.option-card');
+        for (var i = 0; i < cards.length; i++) { cards[i].classList.remove('selected'); }
+        el.classList.add('selected');
+        currentSelection = v;
+    }
+    function nextQuestion(next) {
+        if (!currentSelection) { alert('请选择一个选项！'); return; }
+        userData.answers.push(currentSelection);
+        currentSelection = null;
+        goToPage(next);
+    }
+    function finishPersonality() {
+        if (!currentSelection) { alert('请选择一个选项！'); return; }
+        userData.answers.push(currentSelection);
+        currentSelection = null;
+        var ld = document.getElementById('loading');
+        document.getElementById('loadingText').textContent = '正在解析你的命运密码...';
+        ld.classList.add('active');
+        setTimeout(function() { ld.classList.remove('active'); goToPage(8); }, 2000);
+    }
+
+    // ====== 塔罗牌 ======
+    function flipCard(el, name, emoji, type) {
+        if (el.classList.contains('flipped')) return;
+        var cards = document.querySelectorAll('.tarot-card');
+        for (var i = 0; i < cards.length; i++) { if (cards[i] !== el) cards[i].style.opacity = '0.3'; }
+        el.classList.add('flipped');
+        userData.tarotCard = { name:name, emoji:emoji, type:type };
+        document.getElementById('tarotHint').textContent = '你抽到了【' + name + '】牌！';
+        document.getElementById('tarotBtn').style.display = 'inline-block';
+    }
+
+    // ====== 符文 ======
+    var runeMeanings = {
+        'ᚠ':{title:'费胡符文 (Feihu)',desc:'代表财富与繁荣。预示着即将到来的丰收期，你的努力将获得丰厚回报。'},
+        'ᚢ':{title:'乌鲁兹符文 (Uruz)',desc:'代表力量与坚韧。象征着你内在强大的生命力，无论遇到什么困难，你都有能力克服。'},
+        'ᚦ':{title:'苏力萨兹符文 (Thurisaz)',desc:'代表保护与挑战。暗示前方有考验等待着你，但这也是成长的契机。'},
+        'ᚨ':{title:'安苏兹符文 (Ansuz)',desc:'代表智慧与沟通。预示着你将获得重要的启示或建议。'},
+        'ᚱ':{title:'莱多符文 (Raido)',desc:'代表旅程与变化。象征着人生新阶段的开始，将带来意想不到的收获。'}
+    };
+    function selectRune(el, rune) {
+        var runes = document.querySelectorAll('.rune');
+        for (var i = 0; i < runes.length; i++) { runes[i].classList.remove('selected'); }
+        el.classList.add('selected');
+        userData.rune = rune;
+        var m = runeMeanings[rune];
+        document.getElementById('runeTitle').textContent = m.title;
+        document.getElementById('runeDesc').textContent = m.desc;
+        document.getElementById('runeMeaning').style.display = 'block';
+    }
+
+    // ====== 结果计算 ======
+    var personalityTypes = {
+        A:{title:'🔮 神秘预言者',desc:'你拥有敏锐的直觉和洞察力，能够感知常人无法察觉的能量波动。你适合从事需要深度思考的工作，在安静的环境中你能发挥出最大的潜能。'},
+        B:{title:'✨ 星辰操控者',desc:'你天生具有领导魅力和强大的意志力，像星辰一样散发着独特的光芒。你善于规划和执行，能够将梦想变为现实。'},
+        C:{title:'🌌 维度探索者',desc:'你充满好奇心和冒险精神，渴望探索未知的领域。你适应力强，能够在各种环境中找到乐趣。你的创造力和想象力是无穷的宝藏。'},
+        D:{title:'💜 心灵感知者',desc:'你拥有极高的情商和同理心，能够深刻理解他人的情感。你是天生的倾听者和治愈者，朋友们都愿意向你倾诉。'}
+    };
+    var zodiacBonusMap = {
+        '白羊座':{career:15,love:5},'金牛座':{wealth:20,health:5},'双子座':{love:15,career:5},
+        '巨蟹座':{health:15,love:10},'狮子座':{career:20,wealth:5},'处女座':{health:20,career:5},
+        '天秤座':{love:20,career:5},'天蝎座':{wealth:15,love:10},'射手座':{career:10,wealth:15},
+        '摩羯座':{career:20,health:5},'水瓶座':{wealth:15,health:10},'双鱼座':{love:20,wealth:5}
+    };
+    var tarotResults = {
+        '恋人':'爱情运势极佳！近期可能会遇到命中注定的那个人，或者现有的感情将更加甜蜜。',
+        '星辰':'事业将迎来转机！你的才华终于被看见，可能会有升职或重要项目的机会。',
+        '月亮':'财运亨通！可能会有一笔意外之财，或者投资获得回报。但也要注意理性消费。',
+        '太阳':'健康状况良好！你的精力充沛，适合开始新的运动计划或调整作息。',
+        '命运之轮':'综合运势上升！生活中的各个方面都在向好的方向发展。抓住眼前的机会！'
+    };
+    var runeResultMap = {
+        'ᚠ':'财富符文守护着你，近期财运旺盛。','ᚢ':'力量符文加持着你，你将克服一切困难。',
+        'ᚦ':'保护符文笼罩着你，化险为夷。','ᚨ':'智慧符文启迪着你，灵感源源不断。',
+        'ᚱ':'旅程符文引导着你，新的冒险即将开始。'
+    };
+
+    function showFinalResult() {
+        if (!userData.answers.length || !userData.tarotCard || !userData.rune) return;
+        var counts = {A:0,B:0,C:0,D:0};
+        for (var i = 0; i < userData.answers.length; i++) { counts[userData.answers[i]]++; }
+        var max = Math.max(counts.A, counts.B, counts.C, counts.D);
+        var type = counts.A === max ? 'A' : counts.B === max ? 'B' : counts.C === max ? 'C' : 'D';
+        var pers = personalityTypes[type];
+        var b = zodiacBonusMap[userData.zodiac] || {};
+        var f = {
+            love: Math.min(98, 60 + (b.love||0) + Math.floor(Math.random()*20)),
+            career: Math.min(98, 60 + (b.career||0) + Math.floor(Math.random()*20)),
+            wealth: Math.min(98, 60 + (b.wealth||0) + Math.floor(Math.random()*20)),
+            health: Math.min(98, 60 + (b.health||0) + Math.floor(Math.random()*20))
+        };
+        document.getElementById('resultSubtitle').textContent = userData.zodiacEmoji + ' ' + userData.name + ' · ' + userData.zodiac;
+        document.getElementById('personalityTitle').textContent = pers.title;
+        document.getElementById('personalityContent').textContent = pers.desc;
+        document.getElementById('loveScore').textContent = f.love + '%';
+        document.getElementById('careerScore').textContent = f.career + '%';
+        document.getElementById('wealthScore').textContent = f.wealth + '%';
+        document.getElementById('healthScore').textContent = f.health + '%';
+        setTimeout(function() {
+            var lb = document.getElementById('loveBar'); if(lb) lb.style.width = f.love + '%';
+            var cb = document.getElementById('careerBar'); if(cb) cb.style.width = f.career + '%';
+            var wb = document.getElementById('wealthBar'); if(wb) wb.style.width = f.wealth + '%';
+            var hb = document.getElementById('healthBar'); if(hb) hb.style.width = f.health + '%';
+        }, 500);
+        document.getElementById('tarotTitle').textContent = userData.tarotCard.emoji + ' ' + userData.tarotCard.name + '牌解读';
+        document.getElementById('tarotResult').textContent = tarotResults[userData.tarotCard.name] || '';
+        document.getElementById('runeResultTitle').textContent = 'ᛟ 守护符文：' + userData.rune;
+        document.getElementById('runeResult').textContent = runeResultMap[userData.rune] || '神秘符文守护着你。';
+        var stars = Math.floor(f.love / 20);
+        var starStr = '';
+        for (var i = 0; i < stars; i++) { starStr += '⭐'; }
+        document.getElementById('luckyStars').textContent = starStr;
+        var lc = ['深紫色','午夜蓝','星空银','薰衣草紫','神秘黑'];
+        document.getElementById('luckyInfo').innerHTML =
+            '<p>🎲 幸运数字：<strong style="color:#d8b4fe">' + (Math.floor(Math.random()*99)+1) + '</strong></p>' +
+            '<p>🎨 幸运颜色：<strong style="color:#d8b4fe">' + lc[Math.floor(Math.random()*lc.length)] + '</strong></p>';
+    }
+
+    // ====== 分享 & 重置 ======
+    function shareResult() {
+        var text = '🔮 我刚刚完成了神秘命运占卜！\n快来测测你的命运吧！';
+        if (navigator.share) { navigator.share({ title:'神秘命运占卜', text:text }); }
+        else { alert('运势结果已生成，截图分享给朋友吧！'); }
+    }
+    function restart() {
+        userData = { name:'', zodiac:'', zodiacEmoji:'', answers:[], tarotCard:null, rune:null };
+        var selAll = document.querySelectorAll('.selected,.flipped');
+        for (var i = 0; i < selAll.length; i++) { selAll[i].classList.remove('selected','flipped'); }
+        var tc = document.querySelectorAll('.tarot-card');
+        for (var i2 = 0; i2 < tc.length; i2++) { tc[i2].style.opacity = '1'; }
+        generateNickname2();
+        var th = document.getElementById('tarotHint'); if(th) th.textContent = '点击任意一张牌揭开命运';
+        var tb = document.getElementById('tarotBtn'); if(tb) tb.style.display = 'none';
+        var rm = document.getElementById('runeMeaning'); if(rm) rm.style.display = 'none';
+        var bars = ['loveBar','careerBar','wealthBar','healthBar'];
+        for (var i3 = 0; i3 < bars.length; i3++) {
+            var el = document.getElementById(bars[i3]); if(el) el.style.width = '0%';
+        }
+        goToPage(1);
+    }
+
+    // ====== 水晶球粒子 ======
+    function createParticles(event) {
+        var container = event.currentTarget;
+        for (var i = 0; i < 8; i++) {
+            var p = document.createElement('div');
+            p.className = 'magic-particle';
+            p.style.left = Math.random() * 100 + '%';
+            p.style.top = '50%';
+            p.style.animationDelay = Math.random() * 0.5 + 's';
+            container.appendChild(p);
+            (function(particle) { setTimeout(function() { particle.remove(); }, 2000); })(p);
+        }
+    }
+        // ====== 星空生成 ======
+        (function(){
+            var sc = document.getElementById('stars');
+            if (!sc) return;
+            var colors = ['#fff','#d8b4fe','#a78bfa','#22d3ee','#c4b5fd','#fff'];
+            for (var i = 0; i < 80; i++) {
+                var s = document.createElement('div');
+                s.className = 'star';
+                s.style.left = Math.random() * 100 + '%';
+                s.style.top = Math.random() * 100 + '%';
+                s.style.animationDelay = Math.random() * 3 + 's';
+                var sz = Math.random() * 3 + 1;
+                s.style.width = sz + 'px';
+                s.style.height = sz + 'px';
+                s.style.background = colors[Math.floor(Math.random() * colors.length)];
+                s.style.boxShadow = '0 0 ' + (sz*2) + 'px ' + s.style.background;
+                sc.appendChild(s);
+            }
+        })();
+    </script>
 </body>
 </html>

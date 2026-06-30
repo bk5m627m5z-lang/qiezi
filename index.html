@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>赛博玄学走红：这届年轻人在用AI"算"什么？</title>
+    <title>当AI算命成"赛博许愿"，谁来为年轻人的焦虑"解绑"？</title>
+    <script>window.addEventListener('load',function(){window.scrollTo(0,0);});history.scrollRestoration='manual';</script>
 
     <!-- Chart.js 可视化库（本地加载，避免CDN被墙） -->
     <script src="js/chart.min.js"></script>
@@ -184,7 +185,7 @@
         .side-nav:hover .nav-footer,
         .side-nav.pinned .nav-footer { opacity: 1; }
         /* 收起状态：仅图标 */
-        .nav-header { overflow: hidden; white-space: nowrap; }
+        .nav-header { overflow: visible; white-space: normal; }
         .nav-item { overflow: hidden; white-space: nowrap; }
         .nav-pin-btn {
             position: absolute; top: 12px; right: 8px; width: 20px; height: 20px;
@@ -450,7 +451,8 @@
             margin-bottom: 0;
         }
         .chart-grid .chart-container canvas {
-            max-width: 100%;
+            width: 100% !important;
+            height: auto !important;
         }
 
         .chart-source {
@@ -672,8 +674,12 @@
             font-size: 1.1rem;
             color: var(--text-secondary);
             line-height: 1.8;
-            margin-bottom: 40px;
+            margin-bottom: 0;
             animation: heroDescIn 1s ease-out 0.3s both;
+        }
+
+        .hero-desc-sub {
+            margin-bottom: 40px;
         }
 
         @keyframes heroDescIn {
@@ -987,14 +993,35 @@
             width: 100%; height: 100%;
             position: relative;
             display: flex; align-items: center; justify-content: center;
-            background: radial-gradient(ellipse at center, #0a0a1a 0%, #000 100%);
+            background:
+                radial-gradient(ellipse at 50% 40%, rgba(124,58,237,0.15) 0%, transparent 60%),
+                radial-gradient(ellipse at 30% 60%, rgba(34,211,238,0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at 70% 50%, rgba(167,139,250,0.1) 0%, transparent 50%),
+                linear-gradient(180deg, #0f0a24 0%, #0a0820 50%, #060618 100%);
             transition: all 0.8s ease;
+            overflow: hidden;
+        }
+        .entry-phone-screen::after {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background:
+                radial-gradient(1px 1px at 20% 30%, rgba(255,255,255,0.3), transparent),
+                radial-gradient(1px 1px at 60% 20%, rgba(255,255,255,0.2), transparent),
+                radial-gradient(1px 1px at 40% 70%, rgba(255,255,255,0.25), transparent),
+                radial-gradient(1px 1px at 80% 40%, rgba(255,255,255,0.2), transparent),
+                radial-gradient(1px 1px at 10% 80%, rgba(255,255,255,0.15), transparent),
+                radial-gradient(1px 1px at 50% 50%, rgba(255,255,255,0.2), transparent),
+                radial-gradient(1px 1px at 70% 75%, rgba(255,255,255,0.2), transparent),
+                radial-gradient(1px 1px at 25% 15%, rgba(167,139,250,0.4), transparent);
+            pointer-events: none;
+            z-index: 0;
         }
         .entry-phone-glow {
             width: 60px; height: 60px; border-radius: 50%;
-            background: radial-gradient(circle, rgba(124,58,237,0.3) 0%, transparent 70%);
+            background: radial-gradient(circle, rgba(124,58,237,0.4) 0%, rgba(167,139,250,0.2) 30%, transparent 70%);
             animation: phonePulse 2s ease-in-out infinite;
-            
+            z-index: 1;
         }
         @keyframes phonePulse {
             0%,100%{transform:scale(1);opacity:0.6}
@@ -1327,34 +1354,31 @@
     <!-- ==================== 侧边导航 ==================== -->
     <nav class="side-nav" id="sideNav">
         <div class="nav-header">
-            <div class="nav-title">🔮 赛博玄学走红</div>
+            <div class="nav-title">🔮 AI算命<br>与青年压力</div>
             <div class="nav-subtitle">数据新闻</div>
         </div>
         <ul class="nav-list">
             <a class="nav-item active" href="#chapter0" data-nav="0">
-                <span class="nav-number">0</span>开篇故事
+                <span class="nav-number">0</span>导语
             </a>
             <a class="nav-item" href="#chapter1" data-nav="1">
-                <span class="nav-number">1</span>AI算命走红
+                <span class="nav-number">1</span>算法生意
             </a>
-            <a class="nav-item" href="#chapter2" data-nav="2">
-                <span class="nav-number">2</span>用户画像
+            <a class="nav-item" href="#chapter3" data-nav="2">
+                <span class="nav-number">2</span>算准情绪
             </a>
-            <a class="nav-item" href="#chapter3" data-nav="3">
-                <span class="nav-number">3</span>为什么使用AI算命
+            <a class="nav-item" href="#chapter4" data-nav="3">
+                <span class="nav-number">3</span>准的错觉
             </a>
-            <a class="nav-item" href="#chapter4" data-nav="4">
-                <span class="nav-number">4</span>为何感觉"准"
+            <a class="nav-item" href="#chapter5" data-nav="4">
+                <span class="nav-number">4</span>算法之外
             </a>
-            <a class="nav-item" href="#chapter5" data-nav="5">
-                <span class="nav-number">5</span>风险与变现
-            </a>
-            <a class="nav-item" href="#chapter6" data-nav="6">
-                <span class="nav-number">6</span>谁来掌舵
+            <a class="nav-item" href="#chapter6" data-nav="5">
+                <span class="nav-number">5</span>算法与你
             </a>
         </ul>
         <div class="nav-footer">
-            基于自采问卷 · 公开数据 · 社交平台分析
+            基于公开数据 · 自采问卷 · 社交平台分析
         </div>
     </nav>
 
@@ -1416,19 +1440,17 @@
             <div class="hero-bg-glow"></div>
             <div class="hero-bg-glow hero-bg-glow-2"></div>
             <div class="hero-content">
-                <div class="hero-badge">
-                    <span class="hero-badge-dot"></span>
-                    数据新闻
-                </div>
                 <h1 class="hero-title">
-                    <span class="hero-title-line">赛博玄学走红：</span>
+                    <span class="hero-title-line">当AI算命成"赛博许愿"，</span>
                     <span class="hero-title-line hero-title-highlight">
-                        这届年轻人<span class="hero-title-ai">在用AI</span>"算"什么？
+                        谁来为年轻人的焦虑"解绑"？
                     </span>
                 </h1>
                 <p class="hero-desc">
-                    从失业焦虑到AI算命，从边缘话题到百亿赛道——<br>
-                    一项关于"确定性"的时代调查
+                    从失业焦虑到AI算命，从边缘话题到百亿赛道
+                </p>
+                <p class="hero-desc hero-desc-sub">
+                    ——一项关于"确定性"的时代调查
                 </p>
                 <div class="hero-stats">
                     <div class="hero-stat-item">
@@ -1464,7 +1486,7 @@
                 <div class="entry-phone-screen" onclick="unlockPhone()">
                     <div class="entry-phone-glow"></div>
                     <div id="iframeScrollWrap" style="position:absolute;top:0;left:0;width:100%;height:100%;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;">
-                        <iframe id="entryIframe" src="app.html" scrolling="no" style="width:375px;height:1800px;border:none;opacity:0;transition:opacity 0.6s;transform:scale(0.72);transform-origin:0 0;display:block;"></iframe>
+                        <iframe id="entryIframe" src="app.html" loading="lazy" scrolling="no" style="width:375px;height:1800px;border:none;opacity:0;transition:opacity 0.6s;transform:scale(0.72);transform-origin:0 0;display:block;" tabindex="-1"></iframe>
                     </div>
                 </div>
             </div>
@@ -1476,7 +1498,7 @@
         <section class="chapter" id="chapter0">
             <div class="chapter-header">
                 <div class="chapter-number">PROLOGUE</div>
-                <h1 class="chapter-title">赛博玄学走红：<br>这届年轻人在用AI"算"什么？</h1>
+                <h1 class="chapter-title">当AI算命成"赛博许愿"，<br>谁来为年轻人的焦虑"解绑"？</h1>
             </div>
 
             <!-- 绿色故事线 -->
@@ -1579,6 +1601,15 @@
             })();
             </script>
 
+            <div class="content-card">
+                <p><span style="color:var(--accent-cyan);">2026年4月，中央网信办印发通知，在全国范围内部署开展为期4个月的"清朗·整治AI应用乱象"专项行动，明确将"提供AI算命等AI违规功能服务"列为重点整治内容。这是监管部门首次以专项行动的形式，对借助AI算命、AI占卜误导欺骗网民、传播迷信思想的行为亮出红牌。</span></p>
+                <p>像林晓这样的年轻人并非个例。2024年中国AI玄学市场规模突破120亿元，年增长率达43.7%。AI算命完成了从"一次性好奇"到"日常化依赖"的跃迁——47.41%的用户每天使用一次或多次。</p>
+            </div>
+
+            <div class="content-card">
+                <p>一边是监管亮剑，一边是百亿赛道仍在狂奔。这不是一场关于迷信回归的故事，也不只是技术失控的警示。这是一张由"压力"编织的情绪地图。过去三个月，我们面向全国青年群体开展了问卷调查，回收有效问卷120份，覆盖19个省份，并依据公开统计报告和爬虫数据，试图回答一个更具现实意义的问题：<span class="highlight">当"清朗"行动向AI算命亮剑，年轻人的焦虑，该往何处安放？</span></p>
+            </div>
+
             <!-- 付费解锁手机交互 -->
             <div class="paywall-phone" id="paywallPhone" style="opacity:0;transition:opacity 0.8s ease;">
                 <div class="paywall-screen">
@@ -1651,15 +1682,8 @@
             <script>(function(){var im=document.getElementById('imgTarot');if(!im)return;var o=new IntersectionObserver(function(e){if(e[0].isIntersecting){im.style.opacity='1';o.disconnect();}},{threshold:0.1});o.observe(im);})();</script>
             <div class="chapter-header">
                 <div class="chapter-number">CHAPTER 1</div>
-                <h2 class="chapter-title">你也在用AI算命吗？</h2>
+                <h2 class="chapter-title">"算"出来的百亿生意</h2>
                 <p class="chapter-subtitle">AI算命走红：从边缘话题到百亿赛道</p>
-            </div>
-
-            <!-- 绿色故事线 -->
-            <div class="story-block">
-                <p style="color:#c4b5fd;font-style:italic;">
-                    AI的回答给出了明确时间节点：农历三月，你的人生将会迎来转机，4月10日前可获正式录用通知，5月15日前可入职；同时提示，4月面试机会将明显增加。你其实是个很要强的人，能扛得住事，只是暂时缺少一个时机。
-                </p>
             </div>
 
             <!-- 时间轴小人交互 -->
@@ -1696,8 +1720,7 @@
             </div>
 
             <div class="content-card">
-                <p>一个值得注意的变化藏在数据里：仅体验一次的用户占43.1%，而每天使用一次或多次的用户高达<span class="highlight">47.41%</span>。将"仅体验一次"与"每日使用"两组数据并置，一个行为层面的跃迁清晰可见——<span class="highlight">AI算命已从一次性好奇，转变为日常化依赖。</span></p>
-                <p>这一转变的底层逻辑并不复杂：AI降低了算命服务的获取门槛（免费、即时、匿名），同时放大了"确定性输出"的心理安慰功能。</p>
+                <p>一个值得注意的变化藏在数据里：仅体验一次的用户占<span class="highlight">43.1%</span>，而每天使用一次或多次的用户高达<span class="highlight">47.41%</span>。将"仅体验一次"与"每日使用"两组数据并置，一个行为层面的跃迁清晰可见——<span class="highlight">AI算命已从一次性好奇，转变为日常化依赖。</span></p>
             </div>
 
             <!-- 图表：最受欢迎玄学科目 + 服务类型占比 并排 -->
@@ -1720,8 +1743,7 @@
             </div>
 
             <div class="content-card">
-                <p>"星座罗盘"以<span class="highlight">41.7%</span>的占比位居榜首；"塔罗牌占卜"占比36.4%紧随其后，两者合计占比超七成。而"周公解梦"、"姓名测命"、"手相测命"等中式传统算命方式占比则相对分散，均未超过25%。</p>
-                <p>AI对中式命理和西式占卜的训练数据均可供给，差异的根源或许在于传播生态。星座、塔罗在新媒体平台拥有更成熟的创作者生态、更低的认知门槛和更"轻"的使用体验，更容易嵌入碎片化的数字生活。而中式命理涉及八字排盘、五行生克等知识体系，学习曲线较陡，AI化后仍带有较重的"专业门槛感"。</p>
+                <p>从服务类型来看，"星座罗盘"以<span class="highlight">41.7%</span>居首，"塔罗牌占卜"<span class="highlight">36.4%</span>紧随其后，两者合计占比超过七成。相比之下，"周公解梦""姓名测命""手相测命"等中式传统命理方式的占比均在25%以下。星座、塔罗在新媒体平台拥有更成熟的创作者生态和更低的认知门槛，更容易嵌入碎片化的数字生活。</p>
             </div>
             <div class="chart-container">
                 <div class="chart-title">🗺️ AI算命相关评论IP热度分布图</div>
@@ -1782,12 +1804,6 @@
 
         <!-- ====== 第2章：用户画像 ====== -->
         <section class="chapter" id="chapter2">
-            <div class="chapter-header">
-                <div class="chapter-number">CHAPTER 2</div>
-                <h2 class="chapter-title">谁在使用AI算命？</h2>
-                <p class="chapter-subtitle">AI算命背后的用户画像</p>
-            </div>
-
             <!-- 绿色故事线 -->
             <div class="story-block">
                 <p style="color:#c4b5fd;font-style:italic;">
@@ -1808,7 +1824,7 @@
             <div class="chart-container" onclick="var cv=this.querySelector(\"canvas\");if(cv&&cv._chart){var cfg=cv._chart.config;cv._chart.destroy();cv._chart=new Chart(cv,cfg);}">
                 <div class="chart-title">📱 你使用过AI算命工具吗？</div>
                 <canvas id="chartUsage" width="300" height="260" style="display:block;margin:0 auto;"></canvas>
-                <div class="chart-source">数据来源：问卷调查（N=120）</div>
+                <div class="chart-source">数据来源：问卷调查</div>
             </div>
 
             <!-- 图表：性别 + 年龄 -->
@@ -1826,7 +1842,7 @@
             </div>
 
             <div class="content-card">
-                <p>赛博玄学的用户以<span class="highlight">女性为主（77.5%）</span>，年龄集中在95后、00后、90后（合计<span class="highlight">88.3%</span>）。赛博玄学的使用群体主要集中在年轻群体，随着时代发展，年轻人已经习惯将玄学作为一种精神寄托之一。</p>
+                <p>赛博玄学的用户以<span class="highlight">女性为主（77.5%）</span>，年龄集中在<span class="highlight">95后、00后、90后</span>（合计<span class="highlight">88.3%</span>）。赛博玄学的使用群体主要集中在年轻群体，随着时代发展，年轻人已经习惯将玄学作为一种精神寄托之一。</p>
             </div>
 
             <!-- 图表：寻求原因 + 年轻人玄学行为TOP10 并排 -->
@@ -1842,6 +1858,10 @@
                 <canvas id="chartTop10" width="640" height="520"></canvas>
                 <div class="chart-source">数据来源：西安欧亚学院文化传媒学院新传工坊《赛博玄学年度大赏》</div>
             </div>
+            </div>
+
+            <div class="content-card">
+                <p>深层需求更值得关注："缓解压力和焦虑"以<span class="highlight">74.1%</span>高居需求原因榜首，与此同时，专业心理服务使用率仅为<span class="highlight">7.4%</span>，反映出用户对现有情绪应对方式的满意度不高。算命并非因为准确而被选择，而是因为可及——它在专业心理服务的高门槛与青年情绪调节需求之间，找到了一条<span class="highlight">低成本</span>的通道。</p>
             </div>
 
             <!-- 图表：男女压力对比 -->
@@ -1889,8 +1909,8 @@
         <!-- ====== 第3章：为什么使用AI算命 ====== -->
         <section class="chapter" id="chapter3">
             <div class="chapter-header">
-                <div class="chapter-number">CHAPTER 3</div>
-                <h2 class="chapter-title">我们为什么使用AI算命</h2>
+                <div class="chapter-number">CHAPTER 2</div>
+                <h2 class="chapter-title">焦虑的人正涌向AI</h2>
                 <p class="chapter-subtitle">基于AI算命的青年压力调查</p>
             </div>
 
@@ -1915,13 +1935,13 @@
             <div class="chart-container" style="overflow:visible;">
                 <div class="chart-title">😰 过去三个月，你感受到的整体压力程度是？</div>
                 <div id="chartStressLevel" style="width:480px;max-width:100%;height:480px;margin:0 auto;cursor:default;"></div>
-                <div class="chart-source">数据来源：问卷调查（N=120）</div>
+                <div class="chart-source">数据来源：问卷调查</div>
             </div>
 
             <div class="chart-container" onclick="var cv=this.querySelector(\"canvas\");if(cv&&cv._chart){var cfg=cv._chart.config;cv._chart.destroy();cv._chart=new Chart(cv,cfg);}">
                 <div class="chart-title">📋 你的压力主要来源？</div>
-                <canvas id="chartStressSource" width="500" height="280"></canvas>
-                <div class="chart-source">数据来源：问卷调查（N=120）</div>
+                <canvas id="chartStressSource" width="360" height="420"></canvas>
+                <div class="chart-source">数据来源：问卷调查</div>
             </div>
             </div>
 
@@ -1938,6 +1958,14 @@
 
             <div class="content-card">
                 <p>青年压力源呈现多元且集中的特点，平均每人拥有<span class="highlight">4.8个压力源</span>。排名前三的分别是：对未来缺乏掌控感（41.9%）、对现状不满（41.6%）、考试/竞争压力（31.9%）；其中<span class="highlight">同辈压力（28.3%）</span>尤为突出，甚至高于就业压力。</p>
+            </div>
+
+            <div class="content-card">
+                <p>在青年压力源排名中，"对未来缺乏掌控感"占41.9%，"对现状不满"占41.6%，两者合计超过八成。AI算命提供的"未来预览"——无论其准确性如何——恰好回应了这种"掌控感缺失"。用户不需要一个真实准确的预言，只需要一个<span class="highlight">"确定的答案"</span>来缓解当下的不安。</p>
+            </div>
+
+            <div class="content-card">
+                <p>这意味着当代青年感受到的压力，更多不是具体任务的失败，而是一种弥漫性的、对"将来会怎样"的<span class="highlight">不确定感</span>。AI算命的"未来预览"功能，恰好精准回应了这一心理缺口。</p>
             </div>
 
             <!-- 图表：压力下情绪TOP3 -->
@@ -1957,25 +1985,26 @@
             </div>
 
             <div class="content-card">
-                <p>超七成青年在压力下产生焦虑情绪，焦虑引发普遍的拖延和逃避行为。这一代青年的焦虑水平正在迅速上升，和其他年龄段相比，<span class="highlight">18-34岁的青年焦虑水平最高</span>。和其他时代相比，近年来全球精神健康疾病急剧上升，焦虑症增加63%。</p>
+                <p>超七成青年在压力下产生焦虑情绪，焦虑进一步引发普遍的拖延和逃避行为。与其他年龄群体相比，<span class="highlight">18—34岁青年焦虑水平最高</span>。持续的高压与不确定感，使越来越多青年开始寻求情绪出口，AI算命等低门槛、即时反馈的心理慰藉方式因此受到关注。</p>
             </div>
 
-            <!-- 图表：不同身份中高压力占比 -->
+            <!-- 图表：不同身份中高压力占比 + AI算命使用场景 并排 -->
+            <div class="chart-grid">
             <div class="chart-container" onclick="var cv=this.querySelector(\"canvas\");if(cv&&cv._chart){var cfg=cv._chart.config;cv._chart.destroy();cv._chart=new Chart(cv,cfg);}">
                 <div class="chart-title">👔 不同身份青年中高压力占比</div>
                 <canvas id="chartIdentityStress" width="500" height="300"></canvas>
-                <div class="chart-source">数据来源：问卷调查（N=120）</div>
+                <div class="chart-source">数据来源：问卷调查</div>
             </div>
 
-            <!-- 图表：AI算命使用场景 -->
             <div class="chart-container" onclick="var cv=this.querySelector(\"canvas\");if(cv&&cv._chart){var cfg=cv._chart.config;cv._chart.destroy();cv._chart=new Chart(cv,cfg);}">
                 <div class="chart-title">📱 主要使用AI算命的场景</div>
-                <canvas id="chartScenarios" width="680" height="280"></canvas>
-                <div class="chart-source">数据来源：问卷调查（N=120）</div>
+                <canvas id="chartScenarios" width="500" height="420"></canvas>
+                <div class="chart-source">数据来源：问卷调查</div>
+            </div>
             </div>
 
             <div class="content-card">
-                <p>在青年压力源排名中，"对未来缺乏掌控感"占41.9%，"对现状不满"占41.6%，两者合计超过八成。AI算命提供的"未来预览"——无论其准确性如何——恰好回应了这种"掌控感缺失"。用户不需要一个真实准确的预言，只需要一个<span class="highlight">"确定的答案"</span>来缓解当下的不安。</p>
+                <p>从校园到职场的过渡阶段，是青年压力最集中的时期，高压力占比均超过<span class="highlight">70%</span>。在此背景下，青年使用AI算命更多源于职业选择困惑和压力疏解，而非娱乐消遣，反映出其背后对情绪支持和确定性的现实需求。这表明，AI算命正逐渐从娱乐工具转向青年应对现实压力、缓解焦虑情绪的一种<span class="highlight">低门槛心理慰藉方式</span>。</p>
             </div>
 
             <!-- 心情测试 -->
@@ -2021,7 +2050,7 @@
         <!-- ====== 第4章：为何感觉"准" ====== -->
         <section class="chapter" id="chapter4">
             <div class="chapter-header">
-                <div class="chapter-number">CHAPTER 4</div>
+                <div class="chapter-number">CHAPTER 3</div>
                 <h2 class="chapter-title">为什么AI算命让人感觉"准"？</h2>
                 <p class="chapter-subtitle">AI算命背后的逻辑——巴纳姆效应与模式匹配</p>
             </div>
@@ -2029,7 +2058,7 @@
             <!-- 绿色故事线 -->
             <div class="story-block">
                 <p style="color:#c4b5fd;font-style:italic;">
-                    用同一手部照片、同一环境，在同一AI看相平台重复测试5次，5次结果完全不同。林晓自行验证，连续三次向AI提问同一问题，回复细节亦存在差异。
+                    用同一手部照片、同一环境，在同一AI看相平台重复测试5次，5次结果完全不同。林晓连续三次向不同AI提问同一问题，AI回复细节均存在差异，甚至出现了截然不同的结果。
                 </p>
             </div>
 
@@ -2039,18 +2068,15 @@
 
             <!-- 黑色正文 -->
             <div class="content-card">
-                <p>AI本身不具备命理推理能力。AI算命的底层机制，是大语言模型对训练数据中的命理文本进行学习与概率性组合。用户输入的提问格式越详细，AI输出的"个性化"程度越强，但这种个性化并不以命理学的准确性为前提——<span class="highlight">它只是模型的模式匹配与文本生成。</span></p>
-            </div>
-
-            <div class="content-card">
-                <p>南都记者2019年调查显示：用同一手部照片、同一环境，在同一AI看相平台重复测试5次，<span class="highlight">5次结果完全不同</span>。林晓自行验证，连续三次向AI提问同一问题，回复细节亦存在差异。</p>
+                <p><span style="color:var(--accent-cyan);">2022年11月，国家网信办等三部门发布《互联网信息服务深度合成管理规定》，自2023年1月10日起施行，明确深度合成服务提供者应当落实信息安全主体责任。2023年7月，《生成式人工智能服务管理暂行办法》公布，要求提供和使用生成式人工智能服务应当尊重他人合法权益，不得危害他人身心健康。2026年4月，《人工智能拟人化互动服务管理暂行办法》公布，明确禁止"通过情感操纵等方式，诱导用户作出不合理决策"。监管框架正在逐步完善。</span></p>
+                <p>但技术层面的真相是：AI本身不具备命理推理能力。AI算命的底层机制，是大语言模型对训练数据中的命理文本进行学习与概率性组合。南都记者曾在同一环境下用同一只手测试"微算面相"5次，得到了5个完全不同的结果。AI算命的个性化并不以命理学的准确性为前提——<span class="highlight">它只是模型的模式匹配与文本生成。</span></p>
             </div>
 
             <!-- 图表：巴纳姆效应 -->
             <div class="chart-container" onclick="var cv=this.querySelector(\"canvas\");if(cv&&cv._chart){var cfg=cv._chart.config;cv._chart.destroy();cv._chart=new Chart(cv,cfg);}">
                 <div class="chart-title">🎯 "你表面坚强，其实内心很需要被理解"——这类描述与你的实际情况符合程度</div>
                 <div id="chartBarnum" style="width:600px;height:420px;margin:0 auto;"></div>
-                <div class="chart-source">数据来源：问卷调查（N=120）</div>
+                <div class="chart-source">数据来源：问卷调查</div>
             </div>
 
             <div class="content-card">
@@ -2063,7 +2089,7 @@
             <div class="chart-container" onclick="var cv=this.querySelector(\"canvas\");if(cv&&cv._chart){var cfg=cv._chart.config;cv._chart.destroy();cv._chart=new Chart(cv,cfg);}">
                 <div class="chart-title">🤖 你选择AI算命而非传统算命的主要原因？</div>
                 <div id="chartWhyAI" style="width:550px;height:400px;margin:0 auto;"></div>
-                <div class="chart-source">数据来源：问卷调查（N=97）</div>
+                <div class="chart-source">数据来源：问卷调查</div>
             </div>
 
             <div class="content-card">
@@ -2102,17 +2128,16 @@
                     <p style="color:#a89bc4;font-size:11px;margin:4px 0;">三等奖：AI周运势会员 ×10（价值¥198）</p>
                     <p style="color:#22d3ee;font-size:10px;margin-top:6px;">📱 中奖后将有专属顾问电话联系您领取</p>
                 </div>
-                <input id="trapPhone" type="tel" placeholder="请输入手机号以便领取奖品" style="width:85%;padding:11px 14px;margin-bottom:10px;border-radius:22px;border:1px solid rgba(245,158,11,0.4);background:rgba(0,0,0,0.3);color:#e0d5f0;font-size:13px;outline:none;text-align:center;">
                 <p style="color:#a89bc4;font-size:11px;margin:0 0 8px;">选择你想了解的运势方向（可多选）：</p>
                 <div style="display:flex;gap:6px;justify-content:center;margin-bottom:16px;flex-wrap:wrap;">
                     <button class="trap-tag" onclick="toggleTag(this)" style="padding:6px 14px;border-radius:14px;border:1px solid rgba(167,139,250,0.3);font-size:11px;color:#a89bc4;background:transparent;cursor:pointer;transition:all 0.3s;">💼 事业运</button>
                     <button class="trap-tag" onclick="toggleTag(this)" style="padding:6px 14px;border-radius:14px;border:1px solid rgba(167,139,250,0.3);font-size:11px;color:#a89bc4;background:transparent;cursor:pointer;transition:all 0.3s;">💰 财运</button>
                     <button class="trap-tag" onclick="toggleTag(this)" style="padding:6px 14px;border-radius:14px;border:1px solid rgba(167,139,250,0.3);font-size:11px;color:#a89bc4;background:transparent;cursor:pointer;transition:all 0.3s;">💕 桃花运</button>
                 </div>
-                <button id="trapBtn" onclick="submitTrap()" style="width:85%;padding:12px;border-radius:24px;border:none;background:linear-gradient(135deg,#f59e0b,#ef4444);color:#fff;font-size:15px;font-weight:bold;cursor:pointer;transition:all 0.3s;box-shadow:0 4px 20px rgba(245,158,11,0.4);">🎁 立即领取奖品</button>
-                <p style="color:#6e6491;font-size:9px;margin-top:6px;">已有 3,287 人领取 · 仅剩 2 个名额</p>
+                <button id="trapBtn" onclick="submitTrap()" style="width:85%;padding:12px;border-radius:24px;border:none;background:linear-gradient(135deg,#f59e0b,#ef4444);color:#fff;font-size:15px;font-weight:bold;cursor:pointer;transition:all 0.3s;box-shadow:0 4px 20px rgba(245,158,11,0.4);">🔓 点击授权个人信息<br>并领取奖品</button>
+                <p style="color:#6e6491;font-size:9px;margin-top:6px;">授权即表示同意《用户服务协议》与《隐私政策》</p>
                 <div id="trapStep2" style="display:none;margin-top:16px;padding:14px;background:rgba(0,0,0,0.3);border-radius:12px;text-align:center;">
-                    <p style="color:#22d3ee;font-size:12px;font-weight:bold;">🎉 手机号验证成功！</p>
+                    <p style="color:#22d3ee;font-size:12px;font-weight:bold;">🎉 授权成功！</p>
                     <p style="color:#fbbf24;font-weight:bold;margin:8px 0;">🎰 你获得了 <span style="font-size:20px;">三等奖</span>！</p>
                     <p style="color:#a89bc4;font-size:12px;">AI周运势会员（价值¥198）</p>
                     <p style="color:#ef4444;font-weight:bold;font-size:13px;margin-top:8px;">⚠️ 仅需支付 <span style="font-size:18px;">¥9.9</span> 运费即可激活</p>
@@ -2124,16 +2149,13 @@
             <script>
             function toggleTag(el) { el.classList.toggle('active'); if (el.classList.contains('active')) { el.style.background='rgba(167,139,250,0.3)'; el.style.borderColor='#a78bfa'; } else { el.style.background='transparent'; el.style.borderColor='rgba(167,139,250,0.3)'; } }
             function submitTrap() {
-                var phone = document.getElementById('trapPhone').value.trim();
-                if (!phone || phone.length < 8) { var m=document.getElementById('trapMsg'); m.style.color='#ef4444'; m.textContent='请输入有效的手机号码'; m.style.display='block'; return; }
-                document.getElementById('payTrap').querySelector('p').textContent = '🎉 正在验证手机号...';
+                document.getElementById('payTrap').querySelector('p').textContent = '🎉 正在获取您的授权信息...';
                 document.getElementById('trapBtn').style.display = 'none';
-                document.getElementById('trapPhone').disabled = true;
                 setTimeout(function(){ document.getElementById('trapStep2').style.display = 'block'; }, 800);
             }
             function trapPay() {
                 var msg = document.getElementById('trapMsg');
-                msg.innerHTML = '⚠️ <b>停下来。</b><br><br>你刚刚经历了一个完整的<span style="color:#f59e0b;">诱导消费链条</span>：<br><br>🔸 <b>免费抽奖</b> → 吸引你的注意力<br>🔸 <b>填写手机号</b> → 获取你的真实联系方式<br>🔸 <b>"中奖"三等奖</b> → 人人都是三等奖<br>🔸 <b>支付¥9.9运费</b> → 这才是真正的收费<br><br>所谓的"价值¥198会员"<span style="color:#f59e0b;">成本几乎为零</span>——AI生成的运势文本边际成本趋近于零。<br><br>而你的手机号，<span style="color:#ef4444;">已经被纳入精准营销数据库</span>。从明天开始，各种"大师"、"顾问"的电话和短信，将源源不断地涌来。<br><br><span style="color:#22d3ee;">这就是AI算命产业的完整变现模型。</span>';
+                msg.innerHTML = '⚠️ <b>停下来。</b><br><br>你刚刚经历了一个完整的<span style="color:#f59e0b;">诱导消费链条</span>：<br><br>🔸 <b>免费抽奖</b> → 吸引你的注意力<br>🔸 <b>点击授权个人信息</b> → 获取你的隐私数据<br>🔸 <b>"中奖"三等奖</b> → 人人都是三等奖<br>🔸 <b>支付¥9.9运费</b> → 这才是真正的收费<br><br>所谓的"价值¥198会员"<span style="color:#f59e0b;">成本几乎为零</span>——AI生成的运势文本边际成本趋近于零。<br><br>而你授权提交的个人信息，<span style="color:#ef4444;">已经被纳入精准营销数据库</span>。从明天开始，各种"大师"、"顾问"的电话和短信，将源源不断地涌来。<br><br><span style="color:#22d3ee;">这就是AI算命产业的完整变现模型。</span>';
                 msg.style.display = 'block';
                 document.getElementById('trapStep2').style.display = 'none';
                 document.body.classList.add('trap-done');
@@ -2141,7 +2163,7 @@
             }
             function trapSkip() {
                 var msg = document.getElementById('trapMsg');
-                msg.innerHTML = '你选择了放弃。<br><br>但请记住：<span style="color:#f59e0b;">即使你放弃了</span>，你刚刚输入的手机号<span style="color:#ef4444;">也已经被记录</span>。<br><br>在真实的AI算命平台上，<span style="color:#f59e0b;">"放弃"不代表数据消失</span>——它只是被标注为"待二次激活"的潜在付费用户。<br><br><span style="color:#22d3ee;">你的每一次互动，都在为平台创造价值。</span>';
+                msg.innerHTML = '你选择了放弃。<br><br>但请记住：<span style="color:#f59e0b;">即使你放弃了</span>，你刚刚授权的个人信息<span style="color:#ef4444;">也已经被记录</span>。<br><br>在真实的AI算命平台上，<span style="color:#f59e0b;">"放弃"不代表数据消失</span>——它只是被标注为"待二次激活"的潜在付费用户。<br><br><span style="color:#22d3ee;">你的每一次互动，都在为平台提供"价值"。</span>';
                 msg.style.display = 'block';
                 document.getElementById('trapStep2').style.display = 'none';
                 document.body.classList.add('trap-done');
@@ -2153,9 +2175,9 @@
         <!-- ====== 第5章：风险与变现 ====== -->
         <section class="chapter" id="chapter5">
             <div class="chapter-header">
-                <div class="chapter-number">CHAPTER 5</div>
-                <h2 class="chapter-title">风险与商业变现</h2>
-                <p class="chapter-subtitle">情绪支持与信息风险导向</p>
+                <div class="chapter-number">CHAPTER 4</div>
+                <h2 class="chapter-title">算法之外，一场情绪经济的生意</h2>
+                <p class="chapter-subtitle">情绪支持背后的商业模式与信息风险导向</p>
             </div>
 
             <!-- 绿色故事线：案例 -->
@@ -2175,57 +2197,66 @@
                 </p>
             </div>
 
-            <!-- 黑色正文：情绪支持 -->
+            <div class="story-block">
+                <p style="color:#22d3ee;">
+                    2026年4月，多部门联合通告严禁通过直播、短视频等形式开展"算命占卜"等封建迷信活动实施诈骗。2026年5月，中央网信办有关负责人强调"切实履行属地管理责任，督导网站平台对照整治重点，深入自查自纠"。2026年6月，中央网信办举报中心开设"涉AI应用乱象举报专区"，专项受理公众举报。
+                </p>
+            </div>
+
+            <div class="content-card">
+                <p>监管链条正在收紧。与此同时，多所高校已建立免费心理咨询通道——仅赣南师范大学心理健康中心，2025-2026学年上学期即提供<span class="highlight">740</span>余人次咨询服务；山西师范大学等高校心理中心明确<span class="highlight">所有咨询服务免费开放</span>。</p>
+            </div>
+
+            <!-- 情绪缓解 + 风险认知：并排 -->
+            <div class="chart-grid">
             <div class="chart-container" onclick="var cv=this.querySelector(\"canvas\");if(cv&&cv._chart){var cfg=cv._chart.config;cv._chart.destroy();cv._chart=new Chart(cv,cfg);}">
                 <div class="chart-title">💊 使用AI算命能在多大程度上缓解负面情绪？</div>
-                <div id="chartRelief" style="width:500px;height:420px;margin:0 auto;"></div>
-                <div class="chart-source">数据来源：问卷调查（N=120）</div>
+                <div id="chartRelief" style="width:100%;height:400px;margin:0 auto;"></div>
+                <div class="chart-source">数据来源：问卷调查</div>
             </div>
 
-            <div class="content-card">
-                <p>5.15%的用户选择"明显缓解"，51.55%的用户选择"有轻微缓解，能短暂放松一下"——合计过半。与此同时，29.9%选择"几乎无影响"，3.09%选择"反而加重焦虑"。</p>
-            </div>
-
-            <!-- 风险认知图表 -->
-            <div class="chart-container" onclick="var cv=this.querySelector(\"canvas\");if(cv&&cv._chart){var cfg=cv._chart.config;cv._chart.destroy();cv._chart=new Chart(cv,cfg);}">
+            <div class="chart-container">
                 <div class="chart-title">⚠️ 你认为使用AI算命可能存在哪些风险？</div>
-                <div id="chartRisk" style="width:650px;height:300px;margin:0 auto;"></div>
-                <div class="chart-source">数据来源：问卷调查（N=120）</div>
+                <div id="chartRisk" style="width:440px;max-width:100%;height:400px;margin:0 auto;"></div>
+                <div class="chart-source">数据来源：问卷调查</div>
             </div>
-
-            <!-- 风险案例 -->
-            <div class="content-card">
-                <p style="color:#ef4444;font-weight:700;">⚠️ 数据安全警示：</p>
-                <p>占卜网站WeMystic在2023年11月因操作失误泄露<span class="highlight">1330万条</span>用户敏感数据，涉及姓名、性别、出生年月、IP地址等。</p>
-                <p>消费诱导层面："测测"App被315曝光，有用户被诱导消费近<span class="highlight">30万元</span>；平台通过"新人免费券引流—虚拟货币模糊计价—诱导免密支付自动扣费"的方式层层设套。</p>
-                <p>输出可靠性问题："微算面相"的5次测试得出<span class="highlight">5次不同结果</span>，表明部分AI算命产品存在输出随机性。</p>
-            </div>
-
-            <div style="text-align:center;margin:24px 0;">
-                <img src="xielou.jpg" alt="泄露" style="width:280px;border-radius:12px;opacity:0.9;">
             </div>
 
             <!-- 付费意愿 -->
             <div class="chart-container" onclick="var cv=this.querySelector(\"canvas\");if(cv&&cv._chart){var cfg=cv._chart.config;cv._chart.destroy();cv._chart=new Chart(cv,cfg);}">
                 <div class="chart-title">💰 你愿意为AI算命付费吗？</div>
-                <div id="chartPay" style="width:500px;height:320px;margin:0 auto;"></div>
-                <div class="chart-source">数据来源：问卷调查（N=120）</div>
+                <div id="chartPay" style="width:470px;height:300px;margin:0 auto;"></div>
+                <div class="chart-source">数据来源：问卷调查</div>
             </div>
 
             <div class="content-card">
-                <p>从问卷数据来看，目前接触AI算命的用户<span class="highlight">多数不愿意为AI算命功能付费</span>（76.29%选择"只使用免费功能"）。</p>
+                <p>从问卷数据来看，目前接触AI算命的用户<span class="highlight">多数不愿意为AI算命功能付费</span>。</p>
                 <p>AI算命不仅仅是一种情绪出口。从商业视角看，它的变现链条极其清晰：<span class="highlight">免费引流 → 制造焦虑 → 付费解锁</span>。</p>
             </div>
 
             <!-- 玄学连麦价格 -->
             <div class="chart-container" onclick="var cv=this.querySelector(\"canvas\");if(cv&&cv._chart){var cfg=cv._chart.config;cv._chart.destroy();cv._chart=new Chart(cv,cfg);}">
-                <div class="chart-title">🎙️ 玄学连麦价格一览（元/分钟）</div>
-                <div id="chartLivePrice" style="width:600px;height:320px;margin:0 auto;"></div>
+                <div class="chart-title">🎙️ 某玄学app内连麦价格</div>
+                <div id="chartLivePrice" style="width:560px;height:300px;margin:0 auto;"></div>
                 <div class="chart-source">数据来源：某玄学APP；四象工作室（注：APP内充值1潮币=1.5元）</div>
             </div>
 
             <div class="content-card">
                 <p>这些数字说明，情绪服务已经被市场明确定价。值得注意的是，AI技术本应降低算命服务的边际成本，但实际客单价并未下降，反而在高端定制服务中上升。原因在于：AI算命完成了一次产品定位的转换，从<span class="highlight">"信息查询"转向"心理服务"</span>。用户支付的费用，不是为命理结论付费，而是为"被倾听、被理解、被安抚"的情绪体验付费。</p>
+            </div>
+
+            <!-- 风险案例 -->
+            <div style="text-align:center;margin:24px 0;">
+                <img src="xielou.jpg" alt="泄露" style="width:280px;border-radius:12px;opacity:0.9;">
+            </div>
+
+            <div class="content-card">
+                <p style="color:#ef4444;font-weight:700;">⚠️ 数据安全警示：</p>
+                <p>占卜网站WeMystic在2023年11月因操作失误泄露<span class="highlight">1330万条</span>用户敏感数据，涉及姓名、性别、出生年月、IP地址等。</p>
+                <p style="color:#ef4444;font-weight:700;">⚠️ 消费诱导：</p>
+                <p>"测测"App被315曝光，有用户被诱导消费近<span class="highlight">30万元</span>；平台通过"新人免费券引流—虚拟货币模糊计价—诱导免密支付自动扣费"的方式层层设套。</p>
+                <p style="color:#ef4444;font-weight:700;">⚠️ 输出可靠性：</p>
+                <p>"微算面相"的5次测试得出<span class="highlight">5次不同结果</span>，表明部分AI算命产品存在输出随机性。</p>
             </div>
 
             <!-- AI安慰话术 + 评分 -->
@@ -2289,7 +2320,7 @@
         <!-- ====== 第6章：谁来掌舵 ====== -->
         <section class="chapter" id="chapter6">
             <div class="chapter-header">
-                <div class="chapter-number">CHAPTER 6</div>
+                <div class="chapter-number">CHAPTER 5</div>
                 <h2 class="chapter-title">算法与你，谁来掌舵？</h2>
                 <p class="chapter-subtitle">基于AI算命走红的思考</p>
             </div>
@@ -2329,7 +2360,6 @@
             <div class="chart-container" onclick="var cv=this.querySelector(\"canvas\");if(cv&&cv._chart){var cfg=cv._chart.config;cv._chart.destroy();cv._chart=new Chart(cv,cfg);}">
                 <div class="chart-title">📊 使用AI算命缓解负面情绪的程度</div>
                 <div id="chartReliefSummary" style="width:550px;height:320px;margin:0 auto;"></div>
-                <div class="chart-source">数据来源：自采问卷（N=97）</div>
             </div>
 
             <div class="content-card">
@@ -2345,18 +2375,18 @@
             </div>
 
             <div class="content-card">
-                <p>在算法与命运之间，最终的决策尺度仍然是人——在压力中做出选择的你。</p>
+                <p>如今，监管已经入场。<span style="color:var(--accent-cyan);">"清朗"行动</span>整治的是违规功能服务，而当算法制造的"确定性幻觉"被戳破，年轻人的焦虑，该往何处安放？</p>
+                <p>这个问题的答案，不在AI的输出框里，也不在一纸整治通知中。</p>
+                <p style="text-align:center;"><span class="highlight" style="font-weight:700;">在算法与命运之间，最终的决策尺度仍然是人——在压力中做出选择的你。</span></p>
             </div>
 
-            <!-- 数据来源 -->
+            <!-- 资料来源 -->
             <div class="content-card" style="background:rgba(124,58,237,0.05);border-color:rgba(124,58,237,0.1);">
                 <p style="font-size:0.8rem;color:var(--text-muted);line-height:1.6;">
-                    <strong>数据来源：</strong><br>
-                    • 自采问卷：于2025年面向全国青年群体发放，回收有效问卷120份，覆盖19个省份<br>
-                    • 公开统计报告：艾媒咨询、西安欧亚学院文化传媒学院新传工坊、网易数读、《2025中国青年压力调查报告》、《2026青年情绪白皮书》、《中国国民心理健康报告》、《全球疾病负担研究报告》等<br>
-                    • 公开报道与案例：澎湃新闻、南都记者调查、黑猫投诉平台数据、WeMystic泄露事件通报、315曝光案例等<br>
-                    • 平台数据：社交媒体平台AI算命相关话题热度、讨论量、用户评价分布等<br>
-                    • 访谈/案例：来源于公开社交平台用户分享，经核实整理
+                    <strong>资料来源：</strong>国家统计局、中国互联网络信息中心（CNNIC）、中国青年报社会调查中心、中国科学院心理研究所、日慈公益基金会《2026青年情绪白皮书》、项目团队问卷调查（N=120）、公开社交媒体平台数据。<br><br>
+                    <strong>政策依据：</strong>《生成式人工智能服务管理暂行办法》《互联网信息服务算法推荐管理规定》《网络信息内容生态治理规定》、中央网信办"清朗"系列专项行动文件及相关地方治理规定。<br><br>
+                    <strong>学术参考：</strong>陈豪、戴继诚《青年群体网络占卜热：现象透视与风险防范》；刘斌志、梁菀妍《数字谶语：青年AI算命现象的生成机理及风险伴生》；齐琦《Z世代青年"赛博玄学"行为逻辑与引导策略研究——以小红书平台为例》；何枭薇《青年"网络新玄学"的生成原因与风险治理》等。<br><br>
+                    <strong>案例资料：</strong>36氪、南方都市报、新浪财经等媒体公开报道，项目团队访谈以及行业报告、典型案例资料。
                 </p>
             </div>
         </section>
@@ -2485,7 +2515,8 @@
                     }]
                 },
                 options: {
-                    responsive: false,
+                    responsive: true,
+                    maintainAspectRatio: true,
                     interaction: { mode: 'index', intersect: false },
                     plugins: {
                         legend: { labels: { color: '#a89bc4', usePointStyle: true, padding: 20 } },
@@ -2559,7 +2590,8 @@
                     ]
                 },
                 options: {
-                    responsive: false,
+                    responsive: true,
+                    maintainAspectRatio: true,
                     indexAxis: 'y',
                     plugins: { legend:{ display:false }, tooltip:{ callbacks:{ label:function(ctx){return ctx.raw+'%';} } } },
                     scales: {
@@ -2946,7 +2978,7 @@
             c._chart = new Chart(c, {
                 type: 'bubble',
                 data: {
-                    datasets: items.map(function(it,i){ return { label:it.l, data:[{ x:i+1, y:6, r:Math.max(it.v/2, 12) }], backgroundColor:colors[i], borderColor:'rgba(255,255,255,0.35)', borderWidth:3, hoverBorderWidth:4 }; })
+                    datasets: items.map(function(it,i){ return { label:it.l, data:[{ x:6, y:items.length-i, r:Math.max(it.v/2, 12) }], backgroundColor:colors[i], borderColor:'rgba(255,255,255,0.35)', borderWidth:3, hoverBorderWidth:4 }; })
                 },
                 options: {
                     responsive: false,
@@ -2961,8 +2993,8 @@
                         }
                     },
                     scales: {
-                        x: { min:0, max:7, ticks:{ stepSize:1, color:'#6e6491', callback:function(v){ return v>0&&v<=items.length?items[v-1].l:''; }, font:{size:11} }, grid:{display:false} },
-                        y: { min:0, max:14, ticks:{display:false}, grid:{display:false} }
+                        x: { min:0, max:14, ticks:{display:false}, grid:{display:false} },
+                        y: { min:0, max:7, ticks:{ stepSize:1, color:'#6e6491', callback:function(v){ return v>0&&v<=items.length?items[items.length-v].l:''; }, font:{size:11} }, grid:{display:false} }
                     }
                 }
             });
@@ -3094,15 +3126,16 @@
                     }]
                 },
                 options: {
-                    responsive: false,
+                    responsive: true,
+                    maintainAspectRatio: true,
                     plugins: { legend: { display:false }, tooltip: { callbacks: { label: function(ctx) { return ctx.raw + '%'; } } } },
                     scales: {
                         r: {
                             min: 0, max: 70,
-                            ticks: { color: '#6e6491', backdropColor: 'transparent', stepSize: 20, font: { size: 9 } },
+                            ticks: { color: '#6e6491', backdropColor: 'transparent', stepSize: 20, font: { size: 11 } },
                             grid: { color: 'rgba(124,58,237,0.15)' },
                             angleLines: { color: 'rgba(124,58,237,0.1)' },
-                            pointLabels: { color: '#a89bc4', font: { size: 10 } }
+                            pointLabels: { color: '#a89bc4', font: { size: 12 } }
                         }
                     }
                 }
@@ -3307,12 +3340,12 @@
                 series: [{
                     type: 'sunburst',
                     data: [
-                        { name:'符合 (86.6%)', itemStyle:{ color:'#a78bfa' }, children:[
+                        { name:'符合', itemStyle:{ color:'#a78bfa' }, children:[
                             { name:'一般', value:47.42, itemStyle:{ color:'#c4b5fd' } },
                             { name:'比较符合', value:32.99, itemStyle:{ color:'#8b5cf6' } },
                             { name:'非常符合', value:6.19, itemStyle:{ color:'#7c3aed' } }
                         ]},
-                        { name:'不符合 (13.4%)', itemStyle:{ color:'#6e6491' }, children:[
+                        { name:'不符合', itemStyle:{ color:'#6e6491' }, children:[
                             { name:'不太符合', value:11.34, itemStyle:{ color:'rgba(110,100,145,0.8)' } },
                             { name:'非常不符合', value:2.06, itemStyle:{ color:'rgba(110,100,145,0.5)' } }
                         ]}
@@ -3359,17 +3392,16 @@
             if (!dom) return;
             var chart = echarts.init(dom);
             chart.setOption({
-                title: { text:'AI算命风险认知', left:'center', top:5, textStyle:{ color:'#e0d5f0', fontSize:14, fontWeight:'bold' } },
                 tooltip: { trigger:'item', backgroundColor:'rgba(22,22,58,0.95)', borderColor:'rgba(124,58,237,0.5)', textStyle:{ color:'#e0d5f0' },
                     formatter: function(p) { return p.name + '<br/>占比: <b>' + p.value + '%</b>'; } },
                 series: [{
                     type: 'funnel',
-                    left: '15%', right: '15%', top: 50, bottom: 20,
-                    minSize: '20%', maxSize: '100%',
-                    sort: 'descending', gap: 3,
-                    label: { show:true, position:'inside', color:'#fff', fontSize:12, fontWeight:'bold', formatter:'{b}\n{d}%' },
+                    top: 20, bottom: 20,
+                    minSize: '12%', maxSize: '100%',
+                    sort: 'descending', gap: 2,
+                    label: { show:true, position:'inside', color:'#fff', fontSize:13, fontWeight:'bold', formatter:'{b}\n{d}%' },
                     itemStyle: { borderColor:'#0a0a1a', borderWidth:2 },
-                    emphasis: { label:{ fontSize:16 } },
+                    emphasis: { label:{ fontSize:18 } },
                     data: [
                         { name:'过度依赖', value:65.98, itemStyle:{ color:'#ef4444' } },
                         { name:'信息泄露', value:63.92, itemStyle:{ color:'#f59e0b' } },
@@ -3380,6 +3412,7 @@
                     ]
                 }]
             });
+            setTimeout(function() { chart.resize(); }, 100);
         })();
 
         // ====== 情绪缓解：水平条形图（清晰直观） ======
@@ -3395,10 +3428,10 @@
                 { label:'反而加重', value:3.09, color:'#ef4444' }
             ];
             var canvas = document.createElement('canvas');
-            canvas.width = 480;
-            canvas.height = 260;
             canvas.style.display = 'block';
             canvas.style.margin = '0 auto';
+            canvas.style.width = '100%';
+            canvas.style.height = '320px';
             dom.appendChild(canvas);
             new Chart(canvas, {
                 type: 'bar',
@@ -3410,11 +3443,12 @@
                         borderColor: 'transparent',
                         borderWidth: 0,
                         borderRadius: 6,
-                        barThickness: 28
+                        barThickness: 24
                     }]
                 },
                 options: {
-                    responsive: false,
+                    responsive: true,
+                    maintainAspectRatio: false,
                     indexAxis: 'y',
                     plugins: {
                         legend: { display:false },
@@ -3427,10 +3461,6 @@
                     }
                 }
             });
-            var sub = document.createElement('div');
-            sub.style.cssText = 'text-align:center;color:#a89bc4;font-size:11px;margin-top:6px;';
-            sub.textContent = '过半用户获得轻微缓解 · 仅3.09%反而加重';
-            dom.appendChild(sub);
         })();
 
         // ====== 付费意愿：仪表盘 ======
@@ -3441,8 +3471,8 @@
             var payData = [
                 { value:76.29, name:'A. 只使用免费功能', detail:'76.3%', arc:[[0.763,'#a78bfa'],[1,'#6e6491']], ptr:'#22d3ee' },
                 { value:20.62, name:'B. 愿意小额付费', detail:'20.6%', arc:[[0.206,'#8b5cf6'],[1,'#6e6491']], ptr:'#f59e0b' },
-                { value:3.09,  name:'C. 愿意付10-50元', detail:'3.1%',  arc:[[0.031,'#7c3aed'],[1,'#6e6491']], ptr:'#ef4444' },
-                { value:0,     name:'D. 愿付更高费用', detail:'0%',     arc:[[1,'#6e6491']], ptr:'#6e6491' }
+                { value:2.9,   name:'C. 愿意付10-50元', detail:'2.9%',  arc:[[0.029,'#7c3aed'],[1,'#6e6491']], ptr:'#ef4444' },
+                { value:0.2,   name:'D. 愿付更高费用', detail:'0.2%',   arc:[[0.002,'#22d3ee'],[1,'#6e6491']], ptr:'#22d3ee' }
             ];
             var currentPay = 0;
             chart.setOption({
@@ -3451,9 +3481,9 @@
                 series: [{
                     type: 'gauge',
                     startAngle: 210, endAngle: -30,
-                    center: ['50%','60%'], radius: '80%',
+                    center: ['50%','58%'], radius: '75%',
                     min: 0, max: 100,
-                    axisLine: { lineStyle:{ width:20, color:[[0.763,'#a78bfa'],[0.97,'#7c3aed'],[1,'#6e6491']] } },
+                    axisLine: { lineStyle:{ width:20, color:[[0.763,'#a78bfa'],[0.969,'#8b5cf6'],[0.998,'#7c3aed'],[1,'#6e6491']] } },
                     axisTick: { show:false }, splitLine: { show:false }, axisLabel: { show:false },
                     detail: { valueAnimation:true, formatter:payData[0].detail, color:'#e0d5f0', fontSize:36, fontWeight:'bold', offsetCenter:[0,'60%'] },
                     title: { offsetCenter:[0,'85%'], color:'#a89bc4', fontSize:13 },
@@ -3499,12 +3529,12 @@
                 title: { text:'玄学连麦价格（元/分钟）', left:'center', top:5, textStyle:{ color:'#e0d5f0', fontSize:14, fontWeight:'bold' } },
                 tooltip: { backgroundColor:'rgba(22,22,58,0.95)', borderColor:'rgba(124,58,237,0.5)', textStyle:{ color:'#e0d5f0' },
                     formatter: function(p) { var d=raw[p.dataIndex]; return d.name+'<br/>'+d.price+'元/分钟<br/>标签: '+d.tags; } },
-                grid: { left:130, right:30, top:50, bottom:40 },
-                xAxis: { type:'value', name:'价格 (元/分钟)', nameTextStyle:{ color:'#6e6491' }, axisLabel:{ color:'#6e6491' }, axisLine:{ lineStyle:{ color:'rgba(124,58,237,0.2)' } }, splitLine:{ lineStyle:{ color:'rgba(124,58,237,0.08)' } } },
+                grid: { left:120, right:25, top:45, bottom:35 },
+                xAxis: { type:'value', name:'价格 (元/分钟)', nameTextStyle:{ color:'#6e6491' }, axisLabel:{ color:'#6e6491', fontSize:10 }, axisLine:{ lineStyle:{ color:'rgba(124,58,237,0.2)' } }, splitLine:{ lineStyle:{ color:'rgba(124,58,237,0.08)' } } },
                 yAxis: { type:'category', data:raw.map(function(d){return d.name;}), axisLabel:{ color:'#a89bc4', fontSize:10 }, axisLine:{show:false}, axisTick:{show:false} },
                 series: [{
                     type: 'scatter',
-                    data: raw.map(function(d,i){ return { value:[d.price, i], symbolSize: d.price*2.5+10 }; }),
+                    data: raw.map(function(d,i){ return { value:[d.price, i], symbolSize: d.price*2.2+9 }; }),
                     itemStyle: { color: new echarts.graphic.LinearGradient(0,0,1,0,[
                         { offset:0, color:'#8b5cf6' }, { offset:1, color:'#22d3ee' }
                     ]), shadowBlur:8, shadowColor:'rgba(0,0,0,0.4)' },
@@ -3526,10 +3556,6 @@
                 { label:'说不清', value:10, pct:'10.31%', color:'rgba(110,100,145,0.6)' }
             ];
             var maxVal = 50;
-            var title = document.createElement('div');
-            title.style.cssText = 'text-align:center;color:#e0d5f0;font-size:14px;font-weight:bold;margin-bottom:16px;';
-            title.textContent = '使用AI算命缓解负面情绪的程度';
-            dom.appendChild(title);
             data.forEach(function(d) {
                 var row = document.createElement('div');
                 row.style.cssText = 'display:flex;align-items:center;margin-bottom:12px;max-width:450px;margin-left:auto;margin-right:auto;';
@@ -3550,7 +3576,7 @@
             });
             var src = document.createElement('div');
             src.style.cssText = 'text-align:center;color:#6e6491;font-size:10px;margin-top:8px;';
-            src.textContent = '数据来源：自采问卷（N=97）';
+            src.textContent = '数据来源：自采问卷';
             dom.appendChild(src);
         })();
     })();
@@ -3566,9 +3592,22 @@
         var p = document.getElementById("entryPhone");
         var h = document.getElementById("entryHand");
         var f = document.getElementById("entryIframe");
+        var wrap = document.getElementById("iframeScrollWrap");
         if (h) h.classList.add("show");
         if (p) p.classList.add("unlocked");
-        if (f) f.style.opacity = '1';
+        if (f) {
+            if (!f.src) f.src = f.getAttribute('data-src');
+            f.style.opacity = '1';
+        }
+        // 平滑滚动到手机屏幕内iframe居中位置
+        setTimeout(function() {
+            if (wrap) {
+                var wrapH = wrap.clientHeight;
+                var contentH = 1800 * 0.72;
+                var centerOffset = (contentH - wrapH) / 2;
+                wrap.scrollTo({ top: Math.max(0, centerOffset - 60), behavior: 'smooth' });
+            }
+        }, 500);
     }
     </script>
 

@@ -1,4 +1,4 @@
-﻿/* ============================================================
+/* ============================================================
  *  神秘命运占卜 - 主逻辑脚本
  *  按功能模块分组，使用 JSDoc 风格注释
  * ============================================================ */
@@ -31,6 +31,7 @@ let currentSelection = null;
 /** 生成 100 颗随机位置、大小、闪烁延迟的星星 */
 function createStars() {
     var starsContainer = document.getElementById('stars');
+    if (!starsContainer) return;
     for (var i = 0; i < 100; i++) {
         var star = document.createElement('div');
         star.className = 'star';
@@ -43,19 +44,6 @@ function createStars() {
     }
 }
 
-/**
- * 监听第10页（结果页）的 active 状态变化
- * 当结果页显示时自动触发最终结果计算
- */
-var observer = new MutationObserver(function(mutations) {
-    mutations.forEach(function(mutation) {
-        if (mutation.target.id === 'page10' && mutation.target.classList.contains('active')) {
-            showFinalResult();
-        }
-    });
-});
-observer.observe(document.getElementById('page10'), { attributes: true, attributeFilter: ['class'] });
-
 // 注入抖动动画 CSS（动态添加，避免硬编码在样式表中）
 var shakeStyle = document.createElement('style');
 shakeStyle.textContent =
@@ -66,8 +54,25 @@ shakeStyle.textContent =
     '}';
 document.head.appendChild(shakeStyle);
 
-// 页面加载完毕后创建星空
-createStars();
+// DOM 就绪后初始化
+document.addEventListener('DOMContentLoaded', function() {
+    try {
+        createStars();
+        var page10 = document.getElementById('page10');
+        if (page10 && typeof showFinalResult === 'function') {
+            var observer = new MutationObserver(function(mutations) {
+                mutations.forEach(function(mutation) {
+                    if (mutation.target.id === 'page10' && mutation.target.classList.contains('active')) {
+                        showFinalResult();
+                    }
+                });
+            });
+            observer.observe(page10, { attributes: true, attributeFilter: ['class'] });
+        }
+    } catch (e) {
+        // 静默处理，确保页面仍可正常显示
+    }
+});
 
 // ==================== 3. 页面导航 ====================
 
@@ -82,17 +87,68 @@ function goToPage(pageNum) {
         p.classList.remove('active');
     });
     // 激活目标页面
-    document.getElementById('page' + pageNum).classList.add('active');
-    window.scrollTo(0, 0);
+    var target = document.getElementById('page' + pageNum);
+    target.classList.add('active');
+    // 平滑滚动到页面顶部，然后居中展示
+    window.scrollTo({ top: 0, behavior: 'instant' });
+    // 短暂延迟后居中，确保 DOM 更新完成
+    setTimeout(function() {
+        var pageHeight = target.offsetHeight;
+        var winHeight = window.innerHeight;
+        if (pageHeight <= winHeight) {
+            // 内容不超出屏幕：居中展示
+            target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        } else {
+            // 内容超出屏幕：从居中位置开始，保留滚动能力
+            target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    }, 50);
 }
+
+/** 点击屏幕任意处，将当前激活页面居中展示（保留滚动能力） */
+document.addEventListener('click', function(e) {
+    var active = document.querySelector('.page.active');
+    if (!active) return;
+    // 忽略按钮、输入框等交互元素上的点击（它们有自己的行为）
+    if (e.target.closest('button') || e.target.closest('input') || e.target.closest('.tarot-card') ||
+        e.target.closest('.zodiac-item') || e.target.closest('.option-card') || e.target.closest('.rune') ||
+        e.target.closest('.crystal-ball-container')) return;
+    var pageHeight = active.offsetHeight;
+    var winHeight = window.innerHeight;
+    if (pageHeight <= winHeight) {
+        active.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+});
 
 // ==================== 4. 用户输入处理 ====================
 
-/** 保存姓名并跳转到星座选择页 */
+// 昵称生成词库
+var nicknamePrefixes = ['迷茫的','求offer的','失眠的','内卷的','躺平的','焦虑的','搬砖的','摸鱼的','佛系的','emo的'];
+var nicknameSuffixes = ['打工人','毕业生','小透明','社畜','螺丝钉','追梦人','熬夜冠军','外卖品鉴师','PPT纺织工','KPI幸存者'];
+var nicknameNumbers = ['001','007','996','233','404','520','888','666','1314','0420'];
+
+function randomPick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+/** 随机生成昵称并更新显示 */
+function generateNickname2() {
+    var display = document.getElementById('nicknameDisplay2');
+    if (!display) return;
+    var nick = randomPick(nicknamePrefixes) + randomPick(nicknameSuffixes) + '_' + randomPick(nicknameNumbers);
+    display.textContent = nick;
+    display.style.transform = 'scale(1.05)';
+    display.style.transition = 'transform 0.15s ease';
+    setTimeout(function() { display.style.transform = 'scale(1)'; }, 150);
+}
+
+// 页面加载时初始生成一个昵称
+generateNickname2();
+
+/** 保存昵称并跳转到星座选择页 */
 function saveName() {
-    var name = document.getElementById('userName').value.trim();
+    var display = document.getElementById('nicknameDisplay2');
+    var name = display ? display.textContent.trim() : '';
     if (!name) {
-        shakeElement(document.getElementById('userName'));
+        if (display) shakeElement(display);
         return;
     }
     userData.name = name;
@@ -408,8 +464,8 @@ function restart() {
     document.querySelectorAll('.flipped').forEach(function(el) { el.classList.remove('flipped'); });
     document.querySelectorAll('.tarot-card').forEach(function(card) { card.style.opacity = '1'; });
 
-    // 重置输入框和提示文字
-    document.getElementById('userName').value = '';
+    // 重置昵称
+    generateNickname2();
     document.getElementById('tarotHint').textContent = '点击任意一张牌揭开命运';
     document.getElementById('tarotBtn').style.display = 'none';
     document.getElementById('runeMeaning').style.display = 'none';
